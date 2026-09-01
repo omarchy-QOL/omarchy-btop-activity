@@ -22,6 +22,7 @@
       "iconStyle": "CPU",
       "customIconPath": "",
       "windowMode": "Floating",
+      "leftClickAction": "Open or focus",
       "updateMs": 2000,
       "procSorting": "cpu lazy",
       "procTree": false
@@ -46,6 +47,13 @@
         "label": "btop window mode",
         "options": ["Floating", "Tiled"],
         "defaultValue": "Floating"
+      },
+      {
+        "key": "leftClickAction",
+        "type": "enum",
+        "label": "Left click",
+        "options": ["Open or focus", "Toggle"],
+        "defaultValue": "Open or focus"
       }
     ]
   }

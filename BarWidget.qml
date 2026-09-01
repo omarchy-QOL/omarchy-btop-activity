@@ -35,6 +35,10 @@ Panel {
   readonly property string keybindingsScript: localPath(
     Qt.resolvedUrl("open-keybindings.sh"))
   readonly property string windowMode: String(setting("windowMode", "Floating"))
+  readonly property string leftClickAction:
+    String(setting("leftClickAction", "Open or focus"))
+  readonly property string toggleScript: localPath(
+    Qt.resolvedUrl("toggle-btop.sh"))
   readonly property int updateMs: intSetting(
     "updateMs", 2000, UpdateInterval.minimum, UpdateInterval.maximum)
   readonly property var updateDraftValue: UpdateInterval.parse(updateDraft)
@@ -73,7 +77,8 @@ Panel {
   readonly property int customPathIndex: iconStyle === "Custom" ? 1 : -1
   readonly property int keybindingsIndex: iconStyle === "Custom" ? 2 : 1
   readonly property int windowModeIndex: keybindingsIndex + 1
-  readonly property int updateIndex: windowModeIndex + 1
+  readonly property int clickActionIndex: windowModeIndex + 1
+  readonly property int updateIndex: clickActionIndex + 1
   readonly property int sortingIndex: updateIndex + 1
   readonly property int treeIndex: updateIndex + 2
   readonly property int backIndex: updateIndex + 3
@@ -157,6 +162,7 @@ Panel {
     }
     pendingLaunch = ""
     if (action === "help") execBtopHelp()
+    else if (action === "toggle") execToggle()
     else execBtop()
   }
 
@@ -164,6 +170,14 @@ Panel {
     Quickshell.execDetached([
       "omarchy-launch-or-focus-tui", "--app-id=" + btopAppId,
       "btop", "--config", activity.configPath
+    ])
+  }
+
+  function execToggle() {
+    Quickshell.execDetached([
+      "bash", toggleScript,
+      "--app-id", btopAppId,
+      "--config", activity.configPath
     ])
   }
 
@@ -192,7 +206,7 @@ Panel {
 
   function launchBtop() {
     close()
-    launchWhenConfigReady("btop")
+    launchWhenConfigReady(leftClickAction === "Toggle" ? "toggle" : "btop")
   }
 
   function launchBtopHelp() {
@@ -337,6 +351,11 @@ Panel {
       var mode = nextChoice(["Floating", "Tiled"], windowMode, direction)
       applyWindowMode(mode)
       persistPluginSetting("windowMode", mode)
+      return
+    }
+    if (index === clickActionIndex) {
+      persistPluginSetting("leftClickAction",
+        nextChoice(["Open or focus", "Toggle"], leftClickAction, direction))
       return
     }
     if (!activity || activity.configBusy) return
@@ -691,6 +710,16 @@ Panel {
               if (on) root.settingsIndex = root.windowModeIndex
             }
             onClicked: root.cycleSetting(root.windowModeIndex, 1)
+          }
+
+          MenuRow {
+            label: "Left click"
+            value: root.leftClickAction
+            hasCursor: root.settingsIndex === root.clickActionIndex
+            onHovered: function(on) {
+              if (on) root.settingsIndex = root.clickActionIndex
+            }
+            onClicked: root.cycleSetting(root.clickActionIndex, 1)
           }
 
           PanelSeparator { foreground: root.foreground }

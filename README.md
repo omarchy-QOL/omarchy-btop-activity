@@ -69,6 +69,7 @@ The plugin keeps a short list of useful controls before opening btop:
 | Tray icon       | Meters, CPU, Pulse, or a custom image    |
 | Keybindings     | opens the Omarchy user bindings file     |
 | Window mode     | floating or tiled                        |
+| Left click      | open or focus, or toggle (close if open) |
 | Update interval | any whole number from 100 ms to one day  |
 | Process sorting | lazy CPU, direct CPU, memory, or program |
 | Process tree    | on or off                                |
@@ -91,6 +92,20 @@ Omarchy assigns `Super+Ctrl+T` to btop by default. To replace it, e.g. with
 hl.unbind("SUPER + CTRL + T")
 o.bind("SUPER + CTRL + ALT + G", "Activity", { tui = "btop" })
 ```
+
+To make the same key both open and close btop, point the binding at the
+plugin's toggle script instead (pairs naturally with the **Left click →
+Toggle** setting):
+
+```lua
+hl.unbind("SUPER + CTRL + T")
+o.bind("SUPER + CTRL + T", "Activity",
+  os.getenv("HOME") .. "/.config/omarchy/plugins/ilyazar.btop/toggle-btop.sh")
+```
+
+Invoked bare like this, the script reads the configured window mode from
+`shell.json`, closes any open btop window it launched (in either mode), and
+otherwise launches btop with the plugin's runtime config when it exists.
 
 After Hyprland reloads, the settings row shows the effective shortcut, or
 `Unbound` when no Activity binding remains.

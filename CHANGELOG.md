@@ -4,6 +4,11 @@ Notable changes to btop Activity are documented here.
 
 ## Unreleased
 
+- Add a **Left click** setting (Open or focus / Toggle): with Toggle, clicking
+  the widget while btop is open closes the window instead of focusing it. The
+  shipped `toggle-btop.sh` implements the toggle and can be bound directly to
+  the Activity keybinding, so the same key opens and closes btop (@gw7523).
+
 ## 0.2.0 - 2026-08-21
 
 - Rename the GitHub repository to `omarchy-btop-activity` while keeping the
