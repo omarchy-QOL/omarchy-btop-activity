@@ -4,6 +4,11 @@ Notable changes to btop Activity are documented here.
 
 ## Unreleased
 
+- Render the bar tooltip as plain text. The bar draws `tooltipText` with
+  `textFormat: Text.PlainText`, so the `<pre>`/`<font>` wrapper used to dim
+  `<unavailable>` was shown to the user as literal tag text whenever GPU
+  temperature was unreadable (@gw7523).
+
 ## 0.2.0 - 2026-08-21
 
 - Rename the GitHub repository to `omarchy-btop-activity` while keeping the

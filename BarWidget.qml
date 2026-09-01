@@ -59,14 +59,14 @@ Panel {
     activity && activity.gpuTemperature >= 0
   readonly property string gpuTemperatureText: gpuTemperatureAvailable
     ? Math.round(activity.gpuTemperature) + "°C" : "<unavailable>"
-  readonly property string tooltip: styledTooltip(alignedTooltip(
+  readonly property string tooltip: alignedTooltip(
     customIconInvalid ? "Custom icon" : (activity && activity.available
       ? "RAM: " + Math.round(activity.memoryUsage) + "%" : "RAM: --"),
     customIconInvalid ? "Unavailable" : (activity && activity.available
       ? "CPU: " + Math.round(activity.cpuUsage) + "%" + cpuTemperatureSuffix
       : "CPU: --"),
     "GPU: " + gpuUsageText + " • " + gpuTemperatureText
-  ))
+  )
   readonly property var sortingChoices: [
     "cpu lazy", "cpu direct", "memory", "program"
   ]
@@ -108,19 +108,6 @@ Panel {
       + "\n" + padRight(secondMetric, 27) + "    "
       + padLeft("Right click: menu", 17)
       + "\n" + padRight(thirdMetric, 48)
-  }
-
-  function styledTooltip(value) {
-    if (gpuTemperatureAvailable) return value
-    var escaped = String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-    return "<pre>" + escaped.replace(
-      "&lt;unavailable&gt;",
-      "<font color=\"" + String(Qt.darker(Color.tooltip.text, 1.7))
-        + "\">&lt;unavailable&gt;</font>"
-    ) + "</pre>"
   }
 
   function shellQuote(value) {
