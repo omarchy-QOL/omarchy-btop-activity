@@ -50,6 +50,8 @@ QtObject {
     (Quickshell.env("XDG_DATA_HOME")
       || Quickshell.env("HOME") + "/.local/share")
       + "/ilyazar-btop/gpu-telemetry"
+  readonly property string gpuFdinfoPath:
+    localPath(Qt.resolvedUrl("gpu-fdinfo.sh"))
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
     "cpu lazy", "cpu direct"
@@ -122,13 +124,17 @@ QtObject {
     if (!statsProcess.running) statsProcess.running = true
     if (temperaturePath !== "") temperatureFile.reload()
     if (gpuUsagePath !== "") gpuUsageFile.reload()
-    else if (gpuBackend === "helper" && !gpuHelperProcess.running) {
+    else if ((gpuBackend === "fdinfo" || gpuBackend === "helper")
+        && !gpuTelemetryProcess.running) {
       var sampleMs = Math.max(50, Math.min(250, updateMs / 4))
-      gpuHelperProcess.command = [
-        "sh", "-c", "[ -x \"$1\" ] || exit 127; exec \"$1\" \"$2\"",
-        "sh", gpuHelperPath, String(Math.round(sampleMs))
-      ]
-      gpuHelperProcess.running = true
+      gpuTelemetryProcess.command = gpuBackend === "fdinfo"
+        ? ["bash", gpuFdinfoPath, String(Math.round(sampleMs))]
+        : [
+            "sh", "-c",
+            "[ -x \"$1\" ] || exit 127; exec \"$1\"",
+            "sh", gpuHelperPath
+          ]
+      gpuTelemetryProcess.running = true
     }
     if (gpuTemperaturePath !== "") gpuTemperatureFile.reload()
   }
@@ -367,11 +373,12 @@ QtObject {
         gpuBackend = "sysfs"
         gpuUsagePath = fields[1] || ""
       }
+      else if (fields[0] === "gpu_fdinfo") gpuBackend = "fdinfo"
       else if (fields[0] === "gpu_helper") gpuBackend = "helper"
       else if (fields[0] === "gpu_temperature")
         gpuTemperaturePath = fields[1] || ""
     }
-    if (gpuBackend === "" || gpuUsagePath === "") gpuUsage = -1
+    if (gpuBackend === "") gpuUsage = -1
     if (gpuTemperaturePath === "") gpuTemperature = -1
   }
 
@@ -462,17 +469,18 @@ QtObject {
     }
   }
 
-  property Process gpuHelperProcess: Process {
-    id: gpuHelperProcess
+  property Process gpuTelemetryProcess: Process {
+    id: gpuTelemetryProcess
     running: false
     command: []
     stdout: StdioCollector {
-      id: gpuHelperStdout
+      id: gpuTelemetryStdout
       waitForEnd: true
     }
     onExited: function(exitCode) {
-      if (root.gpuBackend !== "helper") return
-      if (exitCode === 0) root.applyGpuTelemetry(gpuHelperStdout.text)
+      if (root.gpuBackend !== "fdinfo" && root.gpuBackend !== "helper")
+        return
+      if (exitCode === 0) root.applyGpuTelemetry(gpuTelemetryStdout.text)
       else {
         root.gpuUsage = -1
         if (root.gpuTemperaturePath === "") root.gpuTemperature = -1
@@ -513,11 +521,13 @@ QtObject {
         + "done; [ -n \"$fallback\" ] && "
         + "printf 'gpu_temperature\\t%s\\n' \"$fallback\"; break; "
         + "done; exit 0; done; "
-        + "candidate=${nvidia:-$intel}; helper=; "
-        + "[ -d /proc/driver/nvidia/gpus ] && helper=1; "
-        + "[ -d /sys/bus/event_source/devices/i915 ] && helper=1; "
-        + "[ -n \"$candidate$helper\" ] || exit 0; "
-        + "printf 'gpu_helper\\n'; "
+        + "candidate=; "
+        + "if [ -n \"$nvidia\" ] "
+        + "&& [ -d /proc/driver/nvidia/gpus ]; then "
+        + "candidate=$nvidia; printf 'gpu_helper\\n'; "
+        + "elif [ -n \"$intel\" ]; then candidate=$intel; "
+        + "printf 'gpu_fdinfo\\n'; "
+        + "else exit 0; fi; "
         + "for h in \"$candidate\"/hwmon/hwmon*; do "
         + "[ -d \"$h\" ] || continue; for f in \"$h\"/temp*_input; do "
         + "[ -r \"$f\" ] || continue; "

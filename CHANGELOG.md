@@ -8,6 +8,8 @@ Notable changes to btop Activity are documented here.
   `textFormat: Text.PlainText`, so the `<pre>`/`<font>` wrapper used to dim
   `<unavailable>` was shown to the user as literal tag text whenever GPU
   temperature was unreadable (@gw7523).
+- Stream Intel GPU usage immediately after installation without a privileged
+  helper.
 
 ## 0.2.0 - 2026-08-21
 
