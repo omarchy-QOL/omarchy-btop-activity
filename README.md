@@ -33,25 +33,22 @@ needs the distribution's ROCm SMI library (`rocm-smi-lib` on Arch).
 ## Use
 
 The plugin reads GPU telemetry from the kernel driver. If that driver does not
-publish a temperature sensor, the hover shows a dimmed `<unavailable>`. If
-something fails here, GPU and driver combinations can be messy, so feel free to
-file an issue.
+publish a temperature sensor, the hover shows `unavailable`. If something fails
+here, GPU and driver combinations can be messy, so feel free to file an issue.
 
-AMD usage and temperature are read directly from DRM sysfs. NVIDIA uses NVML,
-while Intel `i915` usage is sampled from the same Linux performance counters
-used by btop. Install the plugin's narrow helper once to enable the native
-backends:
+AMD usage and temperature are read directly from DRM sysfs. Intel usage is
+sampled from per-client DRM accounting and works immediately after installation.
+NVIDIA uses NVML through a narrow helper that can be built once with:
 
 ```bash
 ~/.config/omarchy/plugins/ilyazar.btop/setup-gpu-helper.sh
 ```
 
-The helper is built locally. On Intel it receives only `cap_perfmon`; NVIDIA
-uses the driver-provided NVML library without elevated privileges. Intel
-integrated GPUs commonly expose package temperature rather than a separate GPU
-sensor, so temperature can remain unavailable even while usage is working.
-Building requires a C compiler and `setcap` from `libcap`. NVIDIA monitoring
-also requires the official driver-provided `libnvidia-ml` library, as btop does.
+The NVIDIA helper is built locally and runs without elevated privileges.
+Building requires a C compiler and the official driver's `libnvidia-ml` library.
+Intel integrated GPUs commonly expose package temperature rather than a
+separate GPU sensor, so temperature can remain unavailable even while usage is
+working.
 
 ## Demo
 
@@ -123,7 +120,7 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | State   | Date       | What changed                                           |
 | ------- | ------- | ---------- | ------------------------------------------------------ |
-| Next    | planned | TBD        | add details when the next release is planned           |
+| Next    | planned | TBD        | fix hover markup and stream Intel GPU data             |
 | 0.2.0   | shipped | 2026-08-21 | make the release table clean and easy to scan          |
 | 0.1.10  | shipped | 2026-08-21 | choose any update interval or step through presets     |
 |         |         |            | restore settings when disabling or removing the plugin |
@@ -161,8 +158,8 @@ signal only after a successful change. Disabling or removing the plugin restores
 a file that existed before the plugin was enabled, or removes the file it
 created.
 
-GPU temperature depends on driver support. If unavailable, the hover shows
-`<unavailable>`. For AMD temperature monitoring in btop, install ROCm SMI:
+GPU temperature depends on driver support. If unavailable, the hover says so.
+For AMD temperature monitoring in btop, install ROCm SMI:
 
 ```bash
 sudo pacman -S rocm-smi-lib
