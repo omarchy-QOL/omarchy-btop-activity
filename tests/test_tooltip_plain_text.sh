@@ -29,9 +29,8 @@ tooltip_source() {
 source_text="$(tooltip_source)"
 [[ -n $source_text ]] || fail "could not extract the tooltip construction from BarWidget.qml"
 
-# `<unavailable>` is deliberate literal text and reads correctly under
-# PlainText; a real tag has a letter or slash straight after the bracket.
-if grep -Eq '<(/|[A-Za-z]+[ >])' <<<"${source_text//<unavailable>/}"; then
+# A real tag has a letter or slash straight after the opening bracket.
+if grep -Eq '<(/|[A-Za-z]+[ >])' <<<"$source_text"; then
   fail "tooltip construction emits HTML tags (the bar renders PlainText)"
 fi
 

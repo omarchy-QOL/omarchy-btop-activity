@@ -58,7 +58,7 @@ Panel {
   readonly property bool gpuTemperatureAvailable:
     activity && activity.gpuTemperature >= 0
   readonly property string gpuTemperatureText: gpuTemperatureAvailable
-    ? Math.round(activity.gpuTemperature) + "°C" : "<unavailable>"
+    ? Math.round(activity.gpuTemperature) + "°C" : "unavailable"
   readonly property string tooltip: alignedTooltip(
     customIconInvalid ? "Custom icon" : (activity && activity.available
       ? "RAM: " + Math.round(activity.memoryUsage) + "%" : "RAM: --"),
