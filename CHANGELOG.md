@@ -4,12 +4,15 @@ Notable changes to btop Activity are documented here.
 
 ## Unreleased
 
+## 0.2.1 - 2026-09-02
+
 - Render the bar tooltip as plain text. The bar draws `tooltipText` with
   `textFormat: Text.PlainText`, so the `<pre>`/`<font>` wrapper used to dim
   `<unavailable>` was shown to the user as literal tag text whenever GPU
   temperature was unreadable (@gw7523).
 - Stream Intel GPU usage immediately after installation without a privileged
   helper.
+- Keep Intel GPU sampling responsive across large descriptor sets.
 
 ## 0.2.0 - 2026-08-21
 

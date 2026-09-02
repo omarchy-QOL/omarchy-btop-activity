@@ -24,7 +24,7 @@ After installation:
 ## Install
 
 ```bash
-omarchy plugin add https://github.com/ilyaZar/omarchy-btop-activity --enable
+omarchy plugin add https://github.com/omarchy-QOL/omarchy-btop-activity --enable
 ```
 
 Omarchy includes btop by default. On AMD systems, btop's own GPU panel also
@@ -120,7 +120,8 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | State   | Date       | What changed                                           |
 | ------- | ------- | ---------- | ------------------------------------------------------ |
-| Next    | planned | TBD        | fix hover markup and stream Intel GPU data             |
+| 0.2.1   | shipped | 2026-09-02 | fix tooltip text and stream Intel GPU data             |
+|         |         |            | keep Intel GPU sampling responsive at scale            |
 | 0.2.0   | shipped | 2026-08-21 | make the release table clean and easy to scan          |
 | 0.1.10  | shipped | 2026-08-21 | choose any update interval or step through presets     |
 |         |         |            | restore settings when disabling or removing the plugin |
