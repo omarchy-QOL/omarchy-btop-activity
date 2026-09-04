@@ -10,12 +10,16 @@ QtObject {
   property real cpuTemperature: -1
   property real gpuUsage: -1
   property real gpuTemperature: -1
+  property real gpuVramUsed: -1
+  property real gpuVramTotal: -1
   property real memoryUsage: 0
   property bool available: false
   property string temperaturePath: ""
   property string gpuBackend: ""
   property string gpuUsagePath: ""
   property string gpuTemperaturePath: ""
+  property string gpuVramUsedPath: ""
+  property string gpuVramTotalPath: ""
   property real previousIdle: -1
   property real previousTotal: -1
 
@@ -137,6 +141,8 @@ QtObject {
       gpuTelemetryProcess.running = true
     }
     if (gpuTemperaturePath !== "") gpuTemperatureFile.reload()
+    if (gpuVramUsedPath !== "") gpuVramUsedFile.reload()
+    if (gpuVramTotalPath !== "") gpuVramTotalFile.reload()
   }
 
   function validatedConfig(interval, sorting, tree) {
@@ -342,9 +348,16 @@ QtObject {
       ? millidegrees / 1000 : -1
   }
 
+  function applyGpuVramBytes(raw) {
+    var bytes = Number(String(raw || "").trim())
+    return isFinite(bytes) && bytes >= 0 ? bytes : -1
+  }
+
   function applyGpuTelemetry(raw) {
     var nextUsage = -1
     var nextTemperature = -1
+    var nextVramUsed = -1
+    var nextVramTotal = -1
     var lines = String(raw || "").trim().split("\n")
     for (var i = 0; i < lines.length; i++) {
       var fields = lines[i].split("\t")
@@ -352,6 +365,8 @@ QtObject {
       if (fields[0] === "usage") nextUsage = Number(fields[1])
       else if (fields[0] === "temperature")
         nextTemperature = Number(fields[1])
+      else if (fields[0] === "memory_used") nextVramUsed = Number(fields[1])
+      else if (fields[0] === "memory_total") nextVramTotal = Number(fields[1])
     }
 
     gpuUsage = isFinite(nextUsage) && nextUsage >= 0 && nextUsage <= 100
@@ -359,12 +374,20 @@ QtObject {
     if (gpuTemperaturePath === "")
       gpuTemperature = isFinite(nextTemperature) && nextTemperature > 0
         && nextTemperature < 200 ? nextTemperature : -1
+    if (gpuVramUsedPath === "" && gpuVramTotalPath === "") {
+      gpuVramUsed = isFinite(nextVramUsed) && nextVramUsed >= 0
+        ? nextVramUsed : -1
+      gpuVramTotal = isFinite(nextVramTotal) && nextVramTotal > 0
+        ? nextVramTotal : -1
+    }
   }
 
   function applySensorPaths(raw) {
     gpuBackend = ""
     gpuUsagePath = ""
     gpuTemperaturePath = ""
+    gpuVramUsedPath = ""
+    gpuVramTotalPath = ""
     var lines = String(raw || "").trim().split("\n")
     for (var i = 0; i < lines.length; i++) {
       var fields = lines[i].split("\t")
@@ -377,9 +400,15 @@ QtObject {
       else if (fields[0] === "gpu_helper") gpuBackend = "helper"
       else if (fields[0] === "gpu_temperature")
         gpuTemperaturePath = fields[1] || ""
+      else if (fields[0] === "gpu_vram_used")
+        gpuVramUsedPath = fields[1] || ""
+      else if (fields[0] === "gpu_vram_total")
+        gpuVramTotalPath = fields[1] || ""
     }
     if (gpuBackend === "") gpuUsage = -1
     if (gpuTemperaturePath === "") gpuTemperature = -1
+    if (gpuVramUsedPath === "") gpuVramUsed = -1
+    if (gpuVramTotalPath === "") gpuVramTotal = -1
   }
 
   property FileView configFile: FileView {
@@ -444,6 +473,20 @@ QtObject {
     onLoadFailed: root.gpuTemperature = -1
   }
 
+  property FileView gpuVramUsedFile: FileView {
+    path: root.gpuVramUsedPath
+    printErrors: false
+    onLoaded: root.gpuVramUsed = root.applyGpuVramBytes(text())
+    onLoadFailed: root.gpuVramUsed = -1
+  }
+
+  property FileView gpuVramTotalFile: FileView {
+    path: root.gpuVramTotalPath
+    printErrors: false
+    onLoaded: root.gpuVramTotal = root.applyGpuVramBytes(text())
+    onLoadFailed: root.gpuVramTotal = -1
+  }
+
   property FileView omarchyConfigFile: FileView {
     id: omarchyConfigFile
     path: root.omarchyConfigPath
@@ -484,6 +527,8 @@ QtObject {
       else {
         root.gpuUsage = -1
         if (root.gpuTemperaturePath === "") root.gpuTemperature = -1
+        if (root.gpuVramUsedPath === "") root.gpuVramUsed = -1
+        if (root.gpuVramTotalPath === "") root.gpuVramTotal = -1
       }
     }
   }
@@ -510,6 +555,11 @@ QtObject {
         + "[ \"$vendor\" = 0x10de ] && nvidia=$d; "
         + "[ -r \"$d/gpu_busy_percent\" ] || continue; "
         + "printf 'gpu\\t%s\\n' \"$d/gpu_busy_percent\"; "
+        + "if [ -r \"$d/mem_info_vram_used\" ] "
+        + "&& [ -r \"$d/mem_info_vram_total\" ]; then "
+        + "printf 'gpu_vram_used\\t%s\\n' \"$d/mem_info_vram_used\"; "
+        + "printf 'gpu_vram_total\\t%s\\n' \"$d/mem_info_vram_total\"; "
+        + "fi; "
         + "for h in \"$d\"/hwmon/hwmon*; do "
         + "[ -d \"$h\" ] || continue; fallback=; "
         + "for f in \"$h\"/temp*_input; do "
@@ -528,6 +578,11 @@ QtObject {
         + "elif [ -n \"$intel\" ]; then candidate=$intel; "
         + "printf 'gpu_fdinfo\\n'; "
         + "else exit 0; fi; "
+        + "if [ -r \"$candidate/mem_info_vram_used\" ] "
+        + "&& [ -r \"$candidate/mem_info_vram_total\" ]; then "
+        + "printf 'gpu_vram_used\\t%s\\n' \"$candidate/mem_info_vram_used\"; "
+        + "printf 'gpu_vram_total\\t%s\\n' \"$candidate/mem_info_vram_total\"; "
+        + "fi; "
         + "for h in \"$candidate\"/hwmon/hwmon*; do "
         + "[ -d \"$h\" ] || continue; for f in \"$h\"/temp*_input; do "
         + "[ -r \"$f\" ] || continue; "

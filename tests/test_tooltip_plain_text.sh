@@ -24,6 +24,7 @@ tooltip_source() {
   sed -n '/readonly property string tooltip:/,/^  readonly property var sortingChoices/p' "$WIDGET"
   sed -n '/^  function alignedTooltip(/,/^  }/p' "$WIDGET"
   sed -n '/^  readonly property string gpuTemperatureText:/,/^  readonly property string tooltip:/p' "$WIDGET"
+  sed -n '/^  readonly property string gpuVramText:/,/^  readonly property string tooltip:/p' "$WIDGET"
 }
 
 source_text="$(tooltip_source)"
@@ -50,6 +51,18 @@ fi
 
 if ! grep -q 'tooltipText: root.tooltip' "$WIDGET"; then
   fail "the bar button no longer takes its tooltip from root.tooltip"
+fi
+
+if ! grep -q 'gpuTemperatureText + " • " + gpuVramText' "$WIDGET"; then
+  fail "the GPU tooltip row no longer includes temperature and vRAM"
+fi
+
+if grep -q '"unavailable"' "$WIDGET"; then
+  fail "GPU hover still uses the long unavailable string"
+fi
+
+if ! grep -q '"unavail."' "$WIDGET"; then
+  fail "GPU hover no longer uses the short unavail. fallback"
 fi
 
 echo "ok - tooltip stays plain text"

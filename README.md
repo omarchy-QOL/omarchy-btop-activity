@@ -18,8 +18,8 @@ After installation:
 - **right-click** bar icon to open the plugin settings
   - choose **Settings** to change plugin and btop options
   - choose **Help** to open built-in help in the selected window mode
-- **hover over it** to see RAM use, CPU use and temperature, and GPU use and
-  temperature
+- **hover over it** to see RAM use, CPU use and temperature, and GPU use,
+  temperature, and vRAM
 
 ## Install
 
@@ -32,9 +32,12 @@ needs the distribution's ROCm SMI library (`rocm-smi-lib` on Arch).
 
 ## Use
 
-The plugin reads GPU telemetry from the kernel driver. If that driver does not
-publish a temperature sensor, the hover shows `unavailable`. If something fails
-here, GPU and driver combinations can be messy, so feel free to file an issue.
+The plugin reads GPU telemetry from the kernel driver, using the same AMD
+sysfs vRAM files and NVIDIA NVML memory call as btop. If a sensor is missing,
+the hover shows `unavail.` for temperature and `unavail. (vRAM)` for memory.
+Intel integrated GPUs typically have no dedicated vRAM, so that field stays
+unavailable. If something fails here, GPU and driver combinations can be
+messy, so feel free to file an issue.
 
 AMD usage and temperature are read directly from DRM sysfs. Intel usage is
 sampled from per-client DRM accounting and works immediately after installation.
@@ -47,8 +50,8 @@ NVIDIA uses NVML through a narrow helper that can be built once with:
 The NVIDIA helper is built locally and runs without elevated privileges.
 Building requires a C compiler and the official driver's `libnvidia-ml` library.
 Intel integrated GPUs commonly expose package temperature rather than a
-separate GPU sensor, so temperature can remain unavailable even while usage is
-working.
+separate GPU sensor, so temperature and vRAM can remain unavailable even
+while usage is working. Rebuild the NVIDIA helper to pick up vRAM there too.
 
 ## Demo
 
@@ -159,8 +162,9 @@ signal only after a successful change. Disabling or removing the plugin restores
 a file that existed before the plugin was enabled, or removes the file it
 created.
 
-GPU temperature depends on driver support. If unavailable, the hover says so.
-For AMD temperature monitoring in btop, install ROCm SMI:
+GPU temperature and vRAM depend on driver support. If unavailable, the hover
+says `unavail.` or `unavail. (vRAM)`. For AMD temperature monitoring in btop,
+install ROCm SMI:
 
 ```bash
 sudo pacman -S rocm-smi-lib

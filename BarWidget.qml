@@ -5,6 +5,7 @@ import qs.Commons
 import qs.Ui
 import "lib/shortcuts" as Shortcuts
 import "lib/UpdateInterval.js" as UpdateInterval
+import "lib/BtopHumanizer.js" as BtopHumanizer
 
 Panel {
   id: root
@@ -58,14 +59,18 @@ Panel {
   readonly property bool gpuTemperatureAvailable:
     activity && activity.gpuTemperature >= 0
   readonly property string gpuTemperatureText: gpuTemperatureAvailable
-    ? Math.round(activity.gpuTemperature) + "°C" : "unavailable"
+    ? Math.round(activity.gpuTemperature) + "°C" : "unavail."
+  readonly property string gpuVramText: BtopHumanizer.vramText(
+    activity ? activity.gpuVramUsed : -1,
+    activity ? activity.gpuVramTotal : -1
+  )
   readonly property string tooltip: alignedTooltip(
     customIconInvalid ? "Custom icon" : (activity && activity.available
       ? "RAM: " + Math.round(activity.memoryUsage) + "%" : "RAM: --"),
     customIconInvalid ? "Unavailable" : (activity && activity.available
       ? "CPU: " + Math.round(activity.cpuUsage) + "%" + cpuTemperatureSuffix
       : "CPU: --"),
-    "GPU: " + gpuUsageText + " • " + gpuTemperatureText
+    "GPU: " + gpuUsageText + " • " + gpuTemperatureText + " • " + gpuVramText
   )
   readonly property var sortingChoices: [
     "cpu lazy", "cpu direct", "memory", "program"
