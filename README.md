@@ -44,7 +44,7 @@ sampled from per-client DRM accounting and works immediately after installation.
 NVIDIA uses NVML through a narrow helper that can be built once with:
 
 ```bash
-~/.config/omarchy/plugins/ilyazar.btop/setup-gpu-helper.sh
+~/.config/omarchy/plugins/ilyazar.btop/helpers/setup-gpu-helper.sh
 ```
 
 The NVIDIA helper is built locally and runs without elevated privileges.
