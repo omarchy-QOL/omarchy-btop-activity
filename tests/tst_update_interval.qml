@@ -81,4 +81,20 @@ TestCase {
   function test_ladder(data) {
     compare(UpdateInterval.ladder(data.input, data.direction), data.expected)
   }
+
+  // Runs last: usePresets replaces shared library state, so restore the
+  // shipped ladder before leaving.
+  function test_use_presets() {
+    UpdateInterval.usePresets([2000, 250, 250, 99, 500])
+    compare(UpdateInterval.presets, [250, 500, 2000])
+    compare(UpdateInterval.ladder(300, 1), 500)
+
+    UpdateInterval.usePresets([])
+    compare(UpdateInterval.presets, [250, 500, 2000])
+    UpdateInterval.usePresets(null)
+    compare(UpdateInterval.presets, [250, 500, 2000])
+
+    UpdateInterval.usePresets([250, 500, 1000, 2000, 5000])
+    compare(UpdateInterval.presets, [250, 500, 1000, 2000, 5000])
+  }
 }
