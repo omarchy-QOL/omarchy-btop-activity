@@ -789,6 +789,43 @@ Panel {
                                 Layout.alignment: Qt.AlignVCenter
                             }
 
+                            Column {
+                                Layout.alignment: Qt.AlignVCenter
+                                spacing: 0
+
+                                PanelActionButton {
+                                    iconText: "^"
+                                    tooltipText: "Next preset"
+                                    foreground: root.foreground
+                                    fontFamily: root.fontFamily
+                                    fontSize: Style.font.bodySmall
+                                    size: Style.space(20)
+                                    height: updateField.implicitHeight / 2
+                                    enabled: root.updateAvailable
+                                    onHovered: function (on) {
+                                        if (on)
+                                            root.settingsIndex = root.updateIndex;
+                                    }
+                                    onClicked: root.clickUpdateLadder(1)
+                                }
+
+                                PanelActionButton {
+                                    iconText: "v"
+                                    tooltipText: "Previous preset"
+                                    foreground: root.foreground
+                                    fontFamily: root.fontFamily
+                                    fontSize: Style.font.bodySmall
+                                    size: Style.space(20)
+                                    height: updateField.implicitHeight / 2
+                                    enabled: root.updateAvailable
+                                    onHovered: function (on) {
+                                        if (on)
+                                            root.settingsIndex = root.updateIndex;
+                                    }
+                                    onClicked: root.clickUpdateLadder(-1)
+                                }
+                            }
+
                             TextField {
                                 id: updateField
                                 Layout.preferredWidth: Style.space(94)
@@ -841,41 +878,6 @@ Panel {
                                 font.family: root.fontFamily
                                 font.pixelSize: Style.font.bodySmall
                                 Layout.alignment: Qt.AlignVCenter
-                            }
-
-                            Column {
-                                Layout.alignment: Qt.AlignVCenter
-                                spacing: 0
-
-                                PanelActionButton {
-                                    iconText: "^"
-                                    tooltipText: "Next preset"
-                                    foreground: root.foreground
-                                    fontFamily: root.fontFamily
-                                    fontSize: Style.font.bodySmall
-                                    size: Style.space(20)
-                                    enabled: root.updateAvailable
-                                    onHovered: function (on) {
-                                        if (on)
-                                            root.settingsIndex = root.updateIndex;
-                                    }
-                                    onClicked: root.clickUpdateLadder(1)
-                                }
-
-                                PanelActionButton {
-                                    iconText: "v"
-                                    tooltipText: "Previous preset"
-                                    foreground: root.foreground
-                                    fontFamily: root.fontFamily
-                                    fontSize: Style.font.bodySmall
-                                    size: Style.space(20)
-                                    enabled: root.updateAvailable
-                                    onHovered: function (on) {
-                                        if (on)
-                                            root.settingsIndex = root.updateIndex;
-                                    }
-                                    onClicked: root.clickUpdateLadder(-1)
-                                }
                             }
                         }
                     }
