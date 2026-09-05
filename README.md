@@ -1,16 +1,26 @@
 # btop Activity for Omarchy Quattro
 
-Brings btop back to the Omarchy bar: live CPU, RAM, and GPU usage (including
-vRAM) and temperatures.
+Brings btop back to the Omarchy bar: live CPU, RAM, and GPU usage (also vRAM)
+and temperatures.
 
 ![btop Activity on the Omarchy desktop](preview.png)
 
-## Some features
+## Features
 
-- applies settings live to the running btop plugin
+- applies settings live to the running btop application
 - preserves Omarchy's btop theme without touching the normal user `btop.conf`
 
 ## Quickstart
+
+```bash
+omarchy plugin add https://github.com/omarchy-QOL/omarchy-btop-activity --enable
+```
+
+The plugin starts with the information Linux already provides: CPU and RAM
+usage, available temperature sensors, and any GPU readings exposed by your
+driver. Omarchy already includes btop and Fastfetch. If GPU readings are
+missing, see the [optional hardware setup](#optional-hardware-setup) for your
+hardware. The plugin detects supported tools automatically.
 
 After installation:
 
@@ -19,18 +29,72 @@ After installation:
   - choose **Settings** to change plugin and btop options
   - choose **Help** to open built-in help in the selected window mode
 - **hover over it** to see RAM use, CPU use and temperature, and GPU use,
-  temperature, and vRAM
+  temperature, and VRAM
 
-## Install
+## Demo
 
-```bash
-omarchy plugin add https://github.com/omarchy-QOL/omarchy-btop-activity --enable
+See btop launch from the bar, switch between floating and tiled layouts, apply a
+250 ms refresh interval live, and update its keybinding.
+
+<https://github.com/user-attachments/assets/d8dde155-dd62-4afa-b586-2f4b95a61d4e>
+
+## Settings
+
+The plugin keeps a short list of useful controls before opening btop:
+
+| Setting         | Choices                                  |
+| --------------- | ---------------------------------------- |
+| Tray icon       | Meters, CPU, Pulse, or a custom image    |
+| Keybindings     | opens the Omarchy user bindings file     |
+| Window mode     | floating or tiled                        |
+| Update interval | any whole number from 100 ms to one day  |
+| Process sorting | lazy CPU, direct CPU, memory, or program |
+| Process tree    | on or off                                |
+
+For the update interval, press Enter or click the value to edit it. Left/Right
+(or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
+1000, 2000, and 5000 ms while still letting you type any value in btop's full
+range. From a custom value, they jump to the next preset above or below it and
+wrap around at the ends.
+
+Edit `~/.config/hypr/bindings.lua` directly, or select **Keybindings** in the
+plugin settings to open it. The button prefers Neovim, jumping to an existing
+Activity override or to the end of the file; without Neovim, it uses Omarchy's
+config editor.
+
+Omarchy assigns `Super+Ctrl+T` to btop by default. To replace it, e.g. with
+`Super+Ctrl+Alt+g`, add:
+
+```lua
+hl.unbind("SUPER + CTRL + T")
+o.bind("SUPER + CTRL + ALT + G", "Activity", { tui = "btop" })
 ```
 
-The plugin starts with the information Linux already provides: CPU and RAM
-usage, available temperature sensors, and any GPU readings exposed by your
-driver. Omarchy already includes btop and Fastfetch. You do not need to install
-every tool below, choose a backend in settings, or build a helper.
+After Hyprland reloads, the settings row shows the effective shortcut, or
+`Unbound` when no Activity binding remains.
+
+Cycle **Tray icon** through **Meters**, **CPU**, **Pulse**, and **Custom**. The
+default CPU icon follows the bar's normal foreground color. The custom path is
+stored separately, so switching between styles does not discard it. **CPU** is
+the default for new installations.
+
+For **Custom**, enter an absolute path, a `~/path`, or a `file://` URL, then
+press Enter or **Save**. SVG and PNG work well. The plugin renders the file
+as-is and does not recolor it. An invalid path shows `!`.
+
+Depending on the installed icon themes, useful paths include:
+
+- `/usr/share/icons/hicolor/scalable/apps/btop.svg`
+- `/usr/share/icons/HighContrast/scalable/apps/utilities-system-monitor.svg`
+- `/usr/share/icons/Yaru/scalable/apps/system-monitor-app-symbolic.svg`
+
+Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
+
+Under **Appearance**, choose whether btop opens tiled or floating. The setting
+applies to both left-click and Help. Floating is the default and restores
+Omarchy's centered 875 x 600 window size when selected.
+
+## Optional hardware setup
 
 AMD Radeon, NVIDIA, and Intel graphics expose different information through
 different tools. When a reading is missing, the plugin can use an installed tool
@@ -202,68 +266,31 @@ follow that release's device-permission guidance; do not assume the
 `intel_gpu_top` capability command applies here. We have not verified this
 backend's installation, permissions, or live readings on suitable hardware.
 
-## Demo
+## Config safety and troubleshooting
 
-See btop launch from the bar, switch between floating and tiled layouts, apply a
-250 ms refresh interval live, and update its keybinding.
+The plugin stores its choices in Omarchy's `shell.json` and generates a private
+btop config under `$XDG_RUNTIME_DIR`. The normal user `btop.conf` is never read
+or written.
 
-<https://github.com/user-attachments/assets/d8dde155-dd62-4afa-b586-2f4b95a61d4e>
+The runtime file is created from Omarchy's packaged btop config. Quickshell
+writes it atomically, and a running btop receives its supported config-reload
+signal only after a successful change. Disabling or removing the plugin restores
+a file that existed before the plugin was enabled, or removes the file it
+created.
 
-## Settings
+GPU temperature and VRAM depend on driver support. If unavailable, the hover
+says `--` or `-- (vRAM)`. See the hardware-specific
+[setup instructions](#optional-hardware-setup) for optional tools, permissions,
+and verification commands.
 
-The plugin keeps a short list of useful controls before opening btop:
+## Remove
 
-| Setting         | Choices                                  |
-| --------------- | ---------------------------------------- |
-| Tray icon       | Meters, CPU, Pulse, or a custom image    |
-| Keybindings     | opens the Omarchy user bindings file     |
-| Window mode     | floating or tiled                        |
-| Update interval | any whole number from 100 ms to one day  |
-| Process sorting | lazy CPU, direct CPU, memory, or program |
-| Process tree    | on or off                                |
-
-For the update interval, press Enter or click the value to edit it. Left/Right
-(or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
-1000, 2000, and 5000 ms while still letting you type any value in btop's full
-range. From a custom value, they jump to the next preset above or below it and
-wrap around at the ends.
-
-Edit `~/.config/hypr/bindings.lua` directly, or select **Keybindings** in the
-plugin settings to open it. The button prefers Neovim, jumping to an existing
-Activity override or to the end of the file; without Neovim, it uses Omarchy's
-config editor.
-
-Omarchy assigns `Super+Ctrl+T` to btop by default. To replace it, e.g. with
-`Super+Ctrl+Alt+g`, add:
-
-```lua
-hl.unbind("SUPER + CTRL + T")
-o.bind("SUPER + CTRL + ALT + G", "Activity", { tui = "btop" })
+```bash
+omarchy plugin remove ilyazar.btop
 ```
 
-After Hyprland reloads, the settings row shows the effective shortcut, or
-`Unbound` when no Activity binding remains.
-
-Cycle **Tray icon** through **Meters**, **CPU**, **Pulse**, and **Custom**. The
-default CPU icon follows the bar's normal foreground color. The custom path is
-stored separately, so switching between styles does not discard it. **CPU** is
-the default for new installations.
-
-For **Custom**, enter an absolute path, a `~/path`, or a `file://` URL, then
-press Enter or **Save**. SVG and PNG work well. The plugin renders the file
-as-is and does not recolor it. An invalid path shows `!`.
-
-Depending on the installed icon themes, useful paths include:
-
-- `/usr/share/icons/hicolor/scalable/apps/btop.svg`
-- `/usr/share/icons/HighContrast/scalable/apps/utilities-system-monitor.svg`
-- `/usr/share/icons/Yaru/scalable/apps/system-monitor-app-symbolic.svg`
-
-Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
-
-Under **Appearance**, choose whether btop opens tiled or floating. The setting
-applies to both left-click and Help. Floating is the default and restores
-Omarchy's centered 875 x 600 window size when selected.
+Removing the plugin removes its private btop settings. It does not remove btop
+or change btop's normal configuration.
 
 ## Roadmap and releases
 
@@ -272,6 +299,14 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.2   | 2026-09-05 | native GPU telemetry without compiled helpers     |
+|         |            | keep CPU and RAM sampling responsive              |
+|         |            | show each GPU and distinguish VRAM/shared RAM     |
+|         |            | document optional tools and Intel permissions     |
+|         |            | align tooltip readings and compact legend         |
+|         |            | keep popup and tray icons in sync                 |
+|         |            | place interval arrows left of the input           |
+|         |            | simplify the release table                        |
 | 0.2.1   | 2026-09-02 | fix tooltip text and stream Intel GPU data        |
 |         |            | keep Intel GPU sampling responsive at scale       |
 | 0.2.0   | 2026-08-21 | simplify the release table                        |
@@ -299,41 +334,19 @@ Planned work stays at the top. Shipped entries come from
 |         |            | default to the CPU icon for new installs          |
 | 0.1.0   | 2026-08-12 | first release                                     |
 
-## Config safety and troubleshooting
-
-The plugin stores its choices in Omarchy's `shell.json` and generates a private
-btop config under `$XDG_RUNTIME_DIR`. The normal user `btop.conf` is never read
-or written.
-
-The runtime file is created from Omarchy's packaged btop config. Quickshell
-writes it atomically, and a running btop receives its supported config-reload
-signal only after a successful change. Disabling or removing the plugin restores
-a file that existed before the plugin was enabled, or removes the file it
-created.
-
-GPU temperature and vRAM depend on driver support. If unavailable, the hover
-says `--` or `-- (vRAM)`. See the hardware-specific
-[setup instructions](#install) for optional tools, permissions, and verification
-commands.
-
-## Remove
-
-```bash
-omarchy plugin remove ilyazar.btop
-```
-
-Removing the plugin removes its private btop settings. It does not remove btop
-or change btop's normal configuration.
-
 ## Development
 
-Link this repository into the local plugin folder and enable it:
+The installed plugin is a regular Git checkout; symlinked plugin folders are
+not supported. Install it using [Quickstart](#quickstart), then edit that
+checkout directly. After making changes, validate and reload it:
 
 ```bash
-ln -s "$PWD" ~/.config/omarchy/plugins/ilyazar.btop
+cd ~/.config/omarchy/plugins/ilyazar.btop
+omarchy plugin validate .
 omarchy-shell shell rescanPlugins
-omarchy plugin enable ilyazar.btop --section right
 ```
+
+If a reload still shows an old component, run `omarchy restart shell`.
 
 ## License
 

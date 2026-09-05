@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "ilyazar.btop",
   "name": "btop Activity",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "ilyaZar",
   "license": "MIT",
-  "description": "Minimal, low-overhead btop access from the Omarchy bar, with live CPU, RAM, GPU, and temperature meters. Common settings, including the polling interval, can be changed without editing btop configuration files. Built-in help opens btop help directly, and the bar supports built-in or custom icons.",
+  "description": "Brings btop back to the Omarchy bar with live CPU, RAM, GPU usage, VRAM, and temperatures. Change common btop settings live, choose floating or tiled windows, open built-in help, and use built-in or custom tray icons.",
   "kinds": ["service", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
