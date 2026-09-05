@@ -14,10 +14,19 @@ typedef struct {
   unsigned int memory;
 } nvmlUtilization_t;
 
+typedef struct {
+  unsigned long long total;
+  unsigned long long free;
+  unsigned long long used;
+} nvmlMemory_t;
+
 struct telemetry {
   double usage;
   double temperature;
   bool has_temperature;
+  unsigned long long memory_used;
+  unsigned long long memory_total;
+  bool has_memory;
 };
 
 static void *load_symbol(void *library, const char *name) {
@@ -49,6 +58,8 @@ static int collect_nvidia(struct telemetry *telemetry) {
       load_symbol(library, "nvmlDeviceGetUtilizationRates");
   nvmlReturn_t (*get_temperature)(nvmlDevice_t, unsigned int, unsigned int *) =
       load_symbol(library, "nvmlDeviceGetTemperature");
+  nvmlReturn_t (*get_memory)(nvmlDevice_t, nvmlMemory_t *) =
+      load_symbol(library, "nvmlDeviceGetMemoryInfo");
 
   if (init == NULL || shutdown == NULL || get_count == NULL ||
       get_device == NULL || get_utilization == NULL) {
@@ -91,6 +102,15 @@ static int collect_nvidia(struct telemetry *telemetry) {
     }
   }
 
+  if (found && get_memory != NULL) {
+    nvmlMemory_t memory = {0};
+    if (get_memory(selected, &memory) == NVML_SUCCESS && memory.total > 0) {
+      telemetry->memory_used = memory.used;
+      telemetry->memory_total = memory.total;
+      telemetry->has_memory = true;
+    }
+  }
+
   shutdown();
   dlclose(library);
   return found ? 0 : -1;
@@ -101,6 +121,9 @@ int main(void) {
       .usage = -1.0,
       .temperature = -1.0,
       .has_temperature = false,
+      .memory_used = 0,
+      .memory_total = 0,
+      .has_memory = false,
   };
 
   if (collect_nvidia(&telemetry) != 0) {
@@ -115,5 +138,9 @@ int main(void) {
   printf("usage\t%.2f\n", telemetry.usage);
   if (telemetry.has_temperature)
     printf("temperature\t%.2f\n", telemetry.temperature);
+  if (telemetry.has_memory) {
+    printf("memory_used\t%llu\n", telemetry.memory_used);
+    printf("memory_total\t%llu\n", telemetry.memory_total);
+  }
   return 0;
 }

@@ -4,6 +4,10 @@ Notable changes to btop Activity are documented here.
 
 ## Unreleased
 
+- Show GPU vRAM in the bar tooltip using btop's shortened byte format, with
+  `unavail. (vRAM)` when the driver does not publish memory totals.
+- Shorten the GPU temperature fallback in the hover to `unavail.`.
+
 ## 0.2.1 - 2026-09-02
 
 - Render the bar tooltip as plain text. The bar draws `tooltipText` with
