@@ -270,34 +270,34 @@ Omarchy's centered 875 x 600 window size when selected.
 Planned work stays at the top. Shipped entries come from
 [CHANGELOG.md](CHANGELOG.md), newest first.
 
-| Release | State   | Date       | What changed                                           |
-| ------- | ------- | ---------- | ------------------------------------------------------ |
-| 0.2.1   | shipped | 2026-09-02 | fix tooltip text and stream Intel GPU data             |
-|         |         |            | keep Intel GPU sampling responsive at scale            |
-| 0.2.0   | shipped | 2026-08-21 | make the release table clean and easy to scan          |
-| 0.1.10  | shipped | 2026-08-21 | choose any update interval or step through presets     |
-|         |         |            | restore settings when disabling or removing the plugin |
-|         |         |            | show Intel and NVIDIA GPU data after helper setup      |
-|         |         |            | keep the widget readable on a transparent bar          |
-| 0.1.9   | shipped | 2026-08-15 | show GPU use and temperature in the tooltip and menu   |
-|         |         |            | show when GPU temperature is unavailable               |
-|         |         |            | display Scroll Lock correctly in shortcuts             |
-| 0.1.8   | shipped | 2026-08-14 | add a demo for launch, window modes, refresh, and keys |
-| 0.1.7   | shipped | 2026-08-14 | update the preview and explain Activity shortcuts      |
-| 0.1.6   | shipped | 2026-08-14 | show the current Activity shortcut or Unbound          |
-|         |         |            | keep custom icon controls beside the icon choice       |
-| 0.1.5   | shipped | 2026-08-14 | open the user bindings file from settings              |
-|         |         |            | apply btop settings without reloading the plugin       |
-|         |         |            | create the private btop config when it is missing      |
-| 0.1.4   | shipped | 2026-08-13 | keep settings usable while the private config loads    |
-|         |         |            | switch open btop windows between floating and tiled    |
-|         |         |            | add the 250 ms interval                                |
-| 0.1.3   | shipped | 2026-08-13 | start from Omarchy's btop config and current theme     |
-| 0.1.2   | shipped | 2026-08-12 | keep plugin settings separate and remove them cleanly  |
-| 0.1.1   | shipped | 2026-08-12 | show CPU temperature in the hover details              |
-|         |         |            | refresh hover data at the chosen interval              |
-|         |         |            | use the CPU icon by default for new installs           |
-| 0.1.0   | shipped | 2026-08-12 | first release                                          |
+| Release | Date       | What changed                                      |
+| ------- | ---------- | ------------------------------------------------- |
+| 0.2.1   | 2026-09-02 | fix tooltip text and stream Intel GPU data        |
+|         |            | keep Intel GPU sampling responsive at scale       |
+| 0.2.0   | 2026-08-21 | simplify the release table                        |
+| 0.1.10  | 2026-08-21 | allow any update interval or preset stepping      |
+|         |            | restore settings on plugin disable or removal     |
+|         |            | show Intel/NVIDIA GPU data after helper setup     |
+|         |            | keep the widget readable on transparent bars      |
+| 0.1.9   | 2026-08-15 | show GPU usage and temperature in hover/menu      |
+|         |            | indicate unavailable GPU temperature              |
+|         |            | fix Scroll Lock display in shortcuts              |
+| 0.1.8   | 2026-08-14 | demo launch, window modes, refresh, and shortcuts |
+| 0.1.7   | 2026-08-14 | update preview and explain Activity shortcuts     |
+| 0.1.6   | 2026-08-14 | show the current Activity shortcut or Unbound     |
+|         |            | place custom icon controls beside icon choice     |
+| 0.1.5   | 2026-08-14 | open user bindings from settings                  |
+|         |            | apply btop settings without plugin reload         |
+|         |            | create private btop config if missing             |
+| 0.1.4   | 2026-08-13 | keep settings usable while private config loads   |
+|         |            | switch open btop windows: floating or tiled       |
+|         |            | add the 250 ms interval                           |
+| 0.1.3   | 2026-08-13 | use Omarchy's btop config and current theme       |
+| 0.1.2   | 2026-08-12 | isolate plugin settings and clean up on removal   |
+| 0.1.1   | 2026-08-12 | show CPU temperature in hover details             |
+|         |            | refresh hover data at the chosen interval         |
+|         |            | default to the CPU icon for new installs          |
+| 0.1.0   | 2026-08-12 | first release                                     |
 
 ## Config safety and troubleshooting
 
