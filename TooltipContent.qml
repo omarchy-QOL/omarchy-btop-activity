@@ -13,7 +13,7 @@ Rectangle {
 
   implicitWidth: Math.ceil(paddingX + border.width
     + Math.max(340 * uiScale, readings.implicitWidth)
-    + 30 * uiScale + legend.width)
+    + 10 * uiScale + legend.width)
   implicitHeight: Math.ceil(Math.max(
     readings.implicitHeight + 2 * (paddingY + border.width),
     legend.height + border.width))
