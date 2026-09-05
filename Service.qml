@@ -55,7 +55,7 @@ QtObject {
       || Quickshell.env("HOME") + "/.local/share")
       + "/ilyazar-btop/gpu-telemetry"
   readonly property string gpuFdinfoPath:
-    localPath(Qt.resolvedUrl("gpu-fdinfo.sh"))
+    localPath(Qt.resolvedUrl("helpers/gpu-fdinfo.sh"))
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
     "cpu lazy", "cpu direct"

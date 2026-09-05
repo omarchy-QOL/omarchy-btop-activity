@@ -34,7 +34,7 @@ Panel {
   readonly property string customIconPath: String(setting("customIconPath", ""))
   readonly property string customIconUrl: resolveIconPath(customIconPath)
   readonly property string keybindingsScript: localPath(
-    Qt.resolvedUrl("open-keybindings.sh"))
+    Qt.resolvedUrl("helpers/open-keybindings.sh"))
   readonly property string windowMode: String(setting("windowMode", "Floating"))
   readonly property int updateMs: intSetting(
     "updateMs", 2000, UpdateInterval.minimum, UpdateInterval.maximum)

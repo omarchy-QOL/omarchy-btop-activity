@@ -70,7 +70,7 @@ assert_large_fd_set() {
       printf -v PAD "%*s" 120000 ""
       export PAD
       BTOP_GPU_PROC_ROOT=$1 BTOP_GPU_DRI_ROOT=$2 bash "$3" 50
-    ' _ "$large_proc" "$large_dri" "$plugin_root/gpu-fdinfo.sh"
+    ' _ "$large_proc" "$large_dri" "$plugin_root/helpers/gpu-fdinfo.sh"
   )
   [[ $output == $'usage\t0.00' ]]
 }
@@ -91,7 +91,7 @@ write_fdinfo "$process_root/fdinfo/7" 8 0
 updater=$!
 
 output=$(BTOP_GPU_PROC_ROOT=$proc_root BTOP_GPU_DRI_ROOT=$dri_root \
-  bash "$plugin_root/gpu-fdinfo.sh" 200)
+  bash "$plugin_root/helpers/gpu-fdinfo.sh" 200)
 wait "$updater"
 
 [[ $output == usage$'\t'* ]]
@@ -102,20 +102,20 @@ write_fdinfo "$process_root/fdinfo/5" 7 0
 write_fdinfo "$process_root/fdinfo/6" 7 0
 write_fdinfo "$process_root/fdinfo/7" 8 0
 output=$(BTOP_GPU_PROC_ROOT=$proc_root BTOP_GPU_DRI_ROOT=$dri_root \
-  bash "$plugin_root/gpu-fdinfo.sh" 50)
+  bash "$plugin_root/helpers/gpu-fdinfo.sh" 50)
 [[ $output == $'usage\t0.00' ]]
 
 assert_large_fd_set
 
 if BTOP_GPU_PROC_ROOT=$temp_root/empty \
     BTOP_GPU_DRI_ROOT=$dri_root \
-    bash "$plugin_root/gpu-fdinfo.sh" 50; then
+    bash "$plugin_root/helpers/gpu-fdinfo.sh" 50; then
   exit 1
 else
   [[ $? -eq 3 ]]
 fi
 
-if bash "$plugin_root/gpu-fdinfo.sh" invalid; then
+if bash "$plugin_root/helpers/gpu-fdinfo.sh" invalid; then
   exit 1
 else
   [[ $? -eq 2 ]]
