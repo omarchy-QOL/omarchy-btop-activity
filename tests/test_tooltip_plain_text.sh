@@ -65,4 +65,13 @@ if ! grep -q '"unavail."' "$WIDGET"; then
   fail "GPU hover no longer uses the short unavail. fallback"
 fi
 
+if ! grep -q 'padLeft("L. click: btop", 14)' "$WIDGET" \
+    || ! grep -q 'padLeft("R. click: menu", 14)' "$WIDGET"; then
+  fail "tooltip no longer uses the abbreviated click labels"
+fi
+
+if ! grep -q 'padRight(thirdMetric, 50)' "$WIDGET"; then
+  fail "tooltip no longer uses the 50-column width"
+fi
+
 echo "ok - tooltip stays plain text"
