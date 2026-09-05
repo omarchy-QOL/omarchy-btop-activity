@@ -31,9 +31,9 @@ TestCase {
         total: 4294967296,
         expected: "1.5G/4.0G (vRAM)"
       },
-      { tag: "missing used", used: -1, total: 4294967296, expected: "unavail. (vRAM)" },
-      { tag: "missing total", used: 0, total: -1, expected: "unavail. (vRAM)" },
-      { tag: "zero total", used: 0, total: 0, expected: "unavail. (vRAM)" }
+      { tag: "missing used", used: -1, total: 4294967296, expected: "-- (vRAM)" },
+      { tag: "missing total", used: 0, total: -1, expected: "-- (vRAM)" },
+      { tag: "zero total", used: 0, total: 0, expected: "-- (vRAM)" }
     ]
   }
 

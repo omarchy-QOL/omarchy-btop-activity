@@ -6,22 +6,15 @@ import "lib/UpdateInterval.js" as UpdateInterval
 QtObject {
   id: root
 
-  property real cpuUsage: 0
-  property real cpuTemperature: -1
-  property real gpuUsage: -1
-  property real gpuTemperature: -1
-  property real gpuVramUsed: -1
-  property real gpuVramTotal: -1
-  property real memoryUsage: 0
-  property bool available: false
-  property string temperaturePath: ""
-  property string gpuBackend: ""
-  property string gpuUsagePath: ""
-  property string gpuTemperaturePath: ""
-  property string gpuVramUsedPath: ""
-  property string gpuVramTotalPath: ""
-  property real previousIdle: -1
-  property real previousTotal: -1
+  property Telemetry telemetry: Telemetry { updateMs: root.updateMs }
+  readonly property real cpuUsage: telemetry.cpuUsage
+  readonly property real memoryUsage: telemetry.memoryUsage
+  readonly property real memoryUsed: telemetry.memoryUsed
+  readonly property real memoryTotal: telemetry.memoryTotal
+  readonly property var cpuTemperature: telemetry.cpuTemperature
+  readonly property string cpuTemperatureKind: telemetry.cpuTemperatureKind
+  readonly property var gpus: telemetry.gpus
+  readonly property bool available: telemetry.available
 
   property int updateMs: 2000
   property bool configExists: false
@@ -50,12 +43,6 @@ QtObject {
   readonly property string pluginDir: localPath(Qt.resolvedUrl("."))
   readonly property string omarchyConfigPath:
     "/usr/share/omarchy/config/btop/btop.conf"
-  readonly property string gpuHelperPath:
-    (Quickshell.env("XDG_DATA_HOME")
-      || Quickshell.env("HOME") + "/.local/share")
-      + "/ilyazar-btop/gpu-telemetry"
-  readonly property string gpuFdinfoPath:
-    localPath(Qt.resolvedUrl("helpers/gpu-fdinfo.sh"))
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
     "cpu lazy", "cpu direct"
@@ -118,31 +105,6 @@ QtObject {
     var value = String(url || "")
     if (value.indexOf("file://") === 0) value = value.substring(7)
     return decodeURIComponent(value).replace(/\/$/, "")
-  }
-
-  function clamp(value, minimum, maximum) {
-    return Math.max(minimum, Math.min(maximum, value))
-  }
-
-  function refresh() {
-    if (!statsProcess.running) statsProcess.running = true
-    if (temperaturePath !== "") temperatureFile.reload()
-    if (gpuUsagePath !== "") gpuUsageFile.reload()
-    else if ((gpuBackend === "fdinfo" || gpuBackend === "helper")
-        && !gpuTelemetryProcess.running) {
-      var sampleMs = Math.max(50, Math.min(250, updateMs / 4))
-      gpuTelemetryProcess.command = gpuBackend === "fdinfo"
-        ? ["bash", gpuFdinfoPath, String(Math.round(sampleMs))]
-        : [
-            "sh", "-c",
-            "[ -x \"$1\" ] || exit 127; exec \"$1\"",
-            "sh", gpuHelperPath
-          ]
-      gpuTelemetryProcess.running = true
-    }
-    if (gpuTemperaturePath !== "") gpuTemperatureFile.reload()
-    if (gpuVramUsedPath !== "") gpuVramUsedFile.reload()
-    if (gpuVramTotalPath !== "") gpuVramTotalFile.reload()
   }
 
   function validatedConfig(interval, sorting, tree) {
@@ -298,119 +260,6 @@ QtObject {
     reloadProcess.running = true
   }
 
-  function applyStats(raw) {
-    var nextIdle = -1
-    var nextTotal = -1
-    var nextMemory = -1
-    var lines = String(raw || "").trim().split("\n")
-
-    for (var i = 0; i < lines.length; i++) {
-      var fields = lines[i].trim().split(/\s+/)
-      if (fields[0] === "cpu" && fields.length >= 3) {
-        nextIdle = Number(fields[1])
-        nextTotal = Number(fields[2])
-      } else if (fields[0] === "memory" && fields.length >= 2) {
-        nextMemory = Number(fields[1])
-      }
-    }
-
-    if (isFinite(nextMemory) && nextMemory >= 0)
-      memoryUsage = clamp(nextMemory, 0, 100)
-
-    if (previousTotal >= 0 && nextTotal > previousTotal) {
-      var totalDelta = nextTotal - previousTotal
-      var idleDelta = nextIdle - previousIdle
-      cpuUsage = clamp((1 - idleDelta / totalDelta) * 100, 0, 100)
-    }
-
-    if (nextIdle >= 0 && nextTotal >= 0) {
-      previousIdle = nextIdle
-      previousTotal = nextTotal
-      available = nextMemory >= 0
-    }
-  }
-
-  function applyTemperature(raw) {
-    var millidegrees = Number(String(raw || "").trim())
-    cpuTemperature = isFinite(millidegrees) && millidegrees > 0
-      ? millidegrees / 1000 : -1
-  }
-
-  function applyGpuUsage(raw) {
-    var percentage = Number(String(raw || "").trim())
-    gpuUsage = isFinite(percentage) && percentage >= 0
-      ? clamp(percentage, 0, 100) : -1
-  }
-
-  function applyGpuTemperature(raw) {
-    var millidegrees = Number(String(raw || "").trim())
-    gpuTemperature = isFinite(millidegrees) && millidegrees > 0
-      ? millidegrees / 1000 : -1
-  }
-
-  function applyGpuVramBytes(raw) {
-    var bytes = Number(String(raw || "").trim())
-    return isFinite(bytes) && bytes >= 0 ? bytes : -1
-  }
-
-  function applyGpuTelemetry(raw) {
-    var nextUsage = -1
-    var nextTemperature = -1
-    var nextVramUsed = -1
-    var nextVramTotal = -1
-    var lines = String(raw || "").trim().split("\n")
-    for (var i = 0; i < lines.length; i++) {
-      var fields = lines[i].split("\t")
-      if (fields.length < 2) continue
-      if (fields[0] === "usage") nextUsage = Number(fields[1])
-      else if (fields[0] === "temperature")
-        nextTemperature = Number(fields[1])
-      else if (fields[0] === "memory_used") nextVramUsed = Number(fields[1])
-      else if (fields[0] === "memory_total") nextVramTotal = Number(fields[1])
-    }
-
-    gpuUsage = isFinite(nextUsage) && nextUsage >= 0 && nextUsage <= 100
-      ? nextUsage : -1
-    if (gpuTemperaturePath === "")
-      gpuTemperature = isFinite(nextTemperature) && nextTemperature > 0
-        && nextTemperature < 200 ? nextTemperature : -1
-    if (gpuVramUsedPath === "" && gpuVramTotalPath === "") {
-      gpuVramUsed = isFinite(nextVramUsed) && nextVramUsed >= 0
-        ? nextVramUsed : -1
-      gpuVramTotal = isFinite(nextVramTotal) && nextVramTotal > 0
-        ? nextVramTotal : -1
-    }
-  }
-
-  function applySensorPaths(raw) {
-    gpuBackend = ""
-    gpuUsagePath = ""
-    gpuTemperaturePath = ""
-    gpuVramUsedPath = ""
-    gpuVramTotalPath = ""
-    var lines = String(raw || "").trim().split("\n")
-    for (var i = 0; i < lines.length; i++) {
-      var fields = lines[i].split("\t")
-      if (fields[0] === "cpu") temperaturePath = fields[1] || ""
-      else if (fields[0] === "gpu") {
-        gpuBackend = "sysfs"
-        gpuUsagePath = fields[1] || ""
-      }
-      else if (fields[0] === "gpu_fdinfo") gpuBackend = "fdinfo"
-      else if (fields[0] === "gpu_helper") gpuBackend = "helper"
-      else if (fields[0] === "gpu_temperature")
-        gpuTemperaturePath = fields[1] || ""
-      else if (fields[0] === "gpu_vram_used")
-        gpuVramUsedPath = fields[1] || ""
-      else if (fields[0] === "gpu_vram_total")
-        gpuVramTotalPath = fields[1] || ""
-    }
-    if (gpuBackend === "") gpuUsage = -1
-    if (gpuTemperaturePath === "") gpuTemperature = -1
-    if (gpuVramUsedPath === "") gpuVramUsed = -1
-    if (gpuVramTotalPath === "") gpuVramTotal = -1
-  }
-
   property FileView configFile: FileView {
     id: configFile
     path: root.configPath
@@ -451,42 +300,6 @@ QtObject {
     }
   }
 
-  property FileView temperatureFile: FileView {
-    id: temperatureFile
-    path: root.temperaturePath
-    printErrors: false
-    onLoaded: root.applyTemperature(text())
-    onLoadFailed: root.cpuTemperature = -1
-  }
-
-  property FileView gpuUsageFile: FileView {
-    path: root.gpuUsagePath
-    printErrors: false
-    onLoaded: root.applyGpuUsage(text())
-    onLoadFailed: root.gpuUsage = -1
-  }
-
-  property FileView gpuTemperatureFile: FileView {
-    path: root.gpuTemperaturePath
-    printErrors: false
-    onLoaded: root.applyGpuTemperature(text())
-    onLoadFailed: root.gpuTemperature = -1
-  }
-
-  property FileView gpuVramUsedFile: FileView {
-    path: root.gpuVramUsedPath
-    printErrors: false
-    onLoaded: root.gpuVramUsed = root.applyGpuVramBytes(text())
-    onLoadFailed: root.gpuVramUsed = -1
-  }
-
-  property FileView gpuVramTotalFile: FileView {
-    path: root.gpuVramTotalPath
-    printErrors: false
-    onLoaded: root.gpuVramTotal = root.applyGpuVramBytes(text())
-    onLoadFailed: root.gpuVramTotal = -1
-  }
-
   property FileView omarchyConfigFile: FileView {
     id: omarchyConfigFile
     path: root.omarchyConfigPath
@@ -498,99 +311,6 @@ QtObject {
       root.finishDefaultConfig()
     }
     onLoadFailed: if (root._creatingConfig) root.useDefaultConfig()
-  }
-
-  property Process statsProcess: Process {
-    id: statsProcess
-    command: ["omarchy-system-stats", "--bar-widget"]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.applyStats(text)
-    }
-    onExited: function(exitCode) {
-      if (exitCode !== 0) root.available = false
-    }
-  }
-
-  property Process gpuTelemetryProcess: Process {
-    id: gpuTelemetryProcess
-    running: false
-    command: []
-    stdout: StdioCollector {
-      id: gpuTelemetryStdout
-      waitForEnd: true
-    }
-    onExited: function(exitCode) {
-      if (root.gpuBackend !== "fdinfo" && root.gpuBackend !== "helper")
-        return
-      if (exitCode === 0) root.applyGpuTelemetry(gpuTelemetryStdout.text)
-      else {
-        root.gpuUsage = -1
-        if (root.gpuTemperaturePath === "") root.gpuTemperature = -1
-        if (root.gpuVramUsedPath === "") root.gpuVramUsed = -1
-        if (root.gpuVramTotalPath === "") root.gpuVramTotal = -1
-      }
-    }
-  }
-
-  property Process sensorPathProcess: Process {
-    running: true
-    command: [
-      "sh", "-c",
-      "emit_vram() { "
-        + "[ -r \"$1/mem_info_vram_used\" ] "
-        + "&& [ -r \"$1/mem_info_vram_total\" ] || return 0; "
-        + "printf 'gpu_vram_used\\t%s\\n' \"$1/mem_info_vram_used\"; "
-        + "printf 'gpu_vram_total\\t%s\\n' \"$1/mem_info_vram_total\"; "
-        + "}; "
-        + "for d in /sys/class/hwmon/hwmon*; do "
-        + "[ -r \"$d/name\" ] || continue; "
-        + "read -r name < \"$d/name\"; "
-        + "case \"$name\" in coretemp|k10temp|zenpower|cpu_thermal) "
-        + "for f in \"$d\"/temp*_input; do "
-        + "[ -r \"$f\" ] || continue; "
-        + "printf 'cpu\\t%s\\n' \"$f\"; break 2; "
-        + "done;; esac; done; "
-        + "intel=; nvidia=; for d in /sys/class/drm/card*/device; do "
-        + "card=${d%/device}; card=${card##*/}; "
-        + "case \"$card\" in card[0-9]|card[0-9][0-9]) ;; "
-        + "*) continue;; esac; "
-        + "[ -r \"$d/vendor\" ] || continue; "
-        + "read -r vendor < \"$d/vendor\"; "
-        + "[ \"$vendor\" = 0x8086 ] && intel=$d; "
-        + "[ \"$vendor\" = 0x10de ] && nvidia=$d; "
-        + "[ -r \"$d/gpu_busy_percent\" ] || continue; "
-        + "printf 'gpu\\t%s\\n' \"$d/gpu_busy_percent\"; "
-        + "emit_vram \"$d\"; "
-        + "for h in \"$d\"/hwmon/hwmon*; do "
-        + "[ -d \"$h\" ] || continue; fallback=; "
-        + "for f in \"$h\"/temp*_input; do "
-        + "[ -r \"$f\" ] || continue; "
-        + "[ -n \"$fallback\" ] || fallback=\"$f\"; "
-        + "label=\"${f%_input}_label\"; "
-        + "[ -r \"$label\" ] || continue; read -r name < \"$label\"; "
-        + "[ \"$name\" = edge ] || continue; fallback=\"$f\"; break; "
-        + "done; [ -n \"$fallback\" ] && "
-        + "printf 'gpu_temperature\\t%s\\n' \"$fallback\"; break; "
-        + "done; exit 0; done; "
-        + "candidate=; "
-        + "if [ -n \"$nvidia\" ] "
-        + "&& [ -d /proc/driver/nvidia/gpus ]; then "
-        + "candidate=$nvidia; printf 'gpu_helper\\n'; "
-        + "elif [ -n \"$intel\" ]; then candidate=$intel; "
-        + "printf 'gpu_fdinfo\\n'; "
-        + "else exit 0; fi; "
-        + "emit_vram \"$candidate\"; "
-        + "for h in \"$candidate\"/hwmon/hwmon*; do "
-        + "[ -d \"$h\" ] || continue; for f in \"$h\"/temp*_input; do "
-        + "[ -r \"$f\" ] || continue; "
-        + "printf 'gpu_temperature\\t%s\\n' \"$f\"; exit 0; "
-        + "done; done"
-    ]
-    stdout: StdioCollector {
-      waitForEnd: true
-      onStreamFinished: root.applySensorPaths(text)
-    }
   }
 
   property Process defaultConfigProcess: Process {
@@ -628,14 +348,6 @@ QtObject {
     id: reloadProcess
     running: false
     command: []
-  }
-
-  property Timer refreshTimer: Timer {
-    interval: root.updateMs
-    repeat: true
-    running: true
-    triggeredOnStart: true
-    onTriggered: root.refresh()
   }
 
   Component.onDestruction: root.teardown()

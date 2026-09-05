@@ -42,12 +42,22 @@ Panel {
     readonly property bool procTree: setting("procTree", false) === true
     readonly property string btopAppId: windowMode === "Tiled" ? "org.omarchy.btop_tiled" : "org.omarchy.btop"
     readonly property bool customIconInvalid: iconStyle === "Custom" && (customIconUrl === "" || customIconLoadFailed)
-    readonly property string cpuTemperatureSuffix: activity && activity.cpuTemperature >= 0 ? " • " + padLeft(Math.round(activity.cpuTemperature), 3) + "°C" : ""
-    readonly property string gpuUsageText: activity && activity.gpuUsage >= 0 ? padLeft(Math.round(activity.gpuUsage), 3) + "%" : "--"
-    readonly property bool gpuTemperatureAvailable: activity && activity.gpuTemperature >= 0
-    readonly property string gpuTemperatureText: gpuTemperatureAvailable ? padLeft(Math.round(activity.gpuTemperature), 3) + "°C" : "unavail."
-    readonly property string gpuVramText: BtopHumanizer.vramText(activity ? activity.gpuVramUsed : -1, activity ? activity.gpuVramTotal : -1)
-    readonly property string tooltip: alignedTooltip(customIconInvalid ? "Custom icon" : (activity && activity.available ? "RAM: " + padLeft(Math.round(activity.memoryUsage), 3) + "%" : "RAM: --"), customIconInvalid ? "Unavailable" : (activity && activity.available ? "CPU: " + padLeft(Math.round(activity.cpuUsage), 3) + "%" + cpuTemperatureSuffix : "CPU: --"), "GPU: " + gpuUsageText + " • " + gpuTemperatureText + " • " + gpuVramText)
+    readonly property var gpus: activity ? activity.gpus : []
+    readonly property string gpuSummary: gpus.length === 1
+        ? "GPU " + (gpus[0].status === "sleeping" ? "asleep"
+            : percentage(gpus[0].usage)
+                + (gpus[0].scope === "clients" ? " (clients)" : ""))
+        : gpus.length + " GPUs"
+    readonly property string cpuTemperatureSuffix: " • "
+        + temperature(activity ? activity.cpuTemperature : null)
+        + (activity && activity.cpuTemperatureKind === "control" ? " (control)" : "")
+    readonly property string tooltipMetrics: [
+        customIconInvalid ? "Custom icon"
+            : metricPrefix("RAM") + percentage(activity ? activity.memoryUsage : null),
+        customIconInvalid ? "Unavailable"
+            : metricPrefix("CPU") + percentage(activity ? activity.cpuUsage : null)
+                + cpuTemperatureSuffix
+    ].concat(gpus.length ? gpuRows() : ["GPU: --"]).join("\n")
     readonly property var sortingChoices: ["cpu lazy", "cpu direct", "memory", "program"]
     readonly property int customPathIndex: iconStyle === "Custom" ? 1 : -1
     readonly property int keybindingsIndex: iconStyle === "Custom" ? 2 : 1
@@ -84,17 +94,47 @@ Panel {
         return text;
     }
 
-    function alignedTooltip(firstMetric, secondMetric, thirdMetric) {
-        return padRight(firstMetric, 32) + "    " + padLeft("L-click: btop", 14) + "\n" + padRight(secondMetric, 32) + "    " + padLeft("R-click: menu", 14) + "\n" + padRight(thirdMetric, 50);
+    function metricPrefix(label) {
+        var longest = gpus.length > 1 ? ("GPU" + (gpus.length - 1)).length : 3;
+        return padRight(label + ":", Math.max(3, longest) + 2);
     }
 
-    function refreshVisibleTooltip() {
-        if (!bar)
-            return;
-        if (bar.pendingTooltipTarget === button)
-            bar.pendingTooltipText = tooltip;
-        else if (bar.tooltipTarget === button)
-            bar.tooltipText = tooltip;
+    function percentage(value) {
+        return typeof value === "number" && value >= 0
+            ? padLeft(Math.round(value), 3) + "%" : "  --";
+    }
+
+    function temperature(value) {
+        return typeof value === "number" && isFinite(value)
+            ? padLeft(Math.round(value), 3) + "°C" : padLeft("--", 3);
+    }
+
+    function gpuRows() {
+        var usageWidth = 4;
+        var temperatureWidth = 5;
+        var rows = gpus.map(function (gpu, index) {
+            var memoryLabel = gpu.memoryKind === "shared" ? "shared GPU"
+                : gpu.memoryKind === "dedicated" ? "vRAM" : "GPU memory";
+            var usage = percentage(gpu.usage) + (gpu.scope === "clients" ? " (clients)" : "");
+            var heat = temperature(gpu.temperature)
+                + (gpu.temperature !== null && gpu.temperatureKind === "hotspot" ? " (hotspot)" : "");
+            usageWidth = Math.max(usageWidth, usage.length);
+            temperatureWidth = Math.max(temperatureWidth, heat.length);
+            return {
+                prefix: metricPrefix(gpus.length === 1 ? "GPU" : "GPU" + index),
+                sleeping: gpu.status === "sleeping",
+                usage: usage,
+                temperature: heat,
+                memory: gpu.memoryKind === "none" ? "Sys. RAM shared (w/ CPU)"
+                    : BtopHumanizer.vramText(gpu.memoryUsed, gpu.memoryTotal, memoryLabel)
+            };
+        });
+        return rows.map(function (row) {
+            return row.sleeping ? row.prefix + "asleep"
+                : row.prefix + padRight(row.usage, usageWidth)
+                    + " • " + padRight(row.temperature, temperatureWidth)
+                    + " • " + row.memory;
+        });
     }
 
     function shellQuote(value) {
@@ -368,7 +408,6 @@ Panel {
         return value;
     }
 
-    onTooltipChanged: refreshVisibleTooltip()
     onCustomIconPathChanged: if (!customIconField.activeFocus)
         customIconDraft = customIconPath
     onUpdateMsChanged: {
@@ -420,7 +459,6 @@ Panel {
         anchors.fill: parent
         bar: root.bar
         active: root.opened
-        tooltipText: root.tooltip
         iconComponent: Component {
             Item {
                 ActivityIcon {
@@ -473,11 +511,22 @@ Panel {
             }
         }
         onPressed: function (buttonCode) {
+            hoverTooltip.dismiss();
             if (buttonCode === Qt.LeftButton)
                 root.launchBtop();
             else if (buttonCode === Qt.RightButton)
                 root.toggle();
         }
+    }
+
+    ActivityTooltip {
+        id: hoverTooltip
+        anchorItem: button
+        bar: root.bar
+        fontFamily: root.fontFamily
+        metrics: root.tooltipMetrics
+        hovered: button.tooltipHovered && !root.opened
+            && !(root.bar && root.bar.activePopout)
     }
 
     KeyboardPanel {
@@ -531,7 +580,11 @@ Panel {
                 PanelHero {
                     width: parent.width
                     title: root.page === "main" ? "btop" : "btop Settings"
-                    meta: root.page === "main" ? "CPU " + Math.round(root.activity ? root.activity.cpuUsage : 0) + "% · RAM " + Math.round(root.activity ? root.activity.memoryUsage : 0) + "% · GPU " + root.gpuUsageText : "Private btop.conf"
+                    meta: root.page === "main"
+                        ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null)
+                            + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null)
+                            + " · " + root.gpuSummary
+                        : "Private btop.conf"
                     foreground: root.foreground
                     fontFamily: root.fontFamily
                     iconComponent: Component {
