@@ -454,61 +454,69 @@ Panel {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
 
+    component SelectedIcon: Item {
+        id: selectedIcon
+        property real iconSize: Style.space(14)
+        property real glyphSize: Style.font.icon
+        implicitWidth: iconSize
+        implicitHeight: iconSize
+
+        ActivityIcon {
+            anchors.centerIn: parent
+            visible: root.iconStyle === "Meters"
+            iconSize: selectedIcon.iconSize
+            cpuUsage: root.activity ? root.activity.cpuUsage : 0
+            memoryUsage: root.activity ? root.activity.memoryUsage : 0
+            color: root.foreground
+            opacity: root.activity && root.activity.available ? 1 : 0.4
+        }
+
+        Image {
+            anchors.centerIn: parent
+            visible: root.iconStyle === "Custom" && root.customIconUrl !== ""
+            width: selectedIcon.iconSize
+            height: width
+            source: root.customIconUrl
+            sourceSize.width: 32
+            sourceSize.height: 32
+            fillMode: Image.PreserveAspectFit
+            smooth: true
+            onSourceChanged: root.customIconLoadFailed = false
+            onStatusChanged: {
+                if (status === Image.Error)
+                    root.customIconLoadFailed = true;
+                else if (status === Image.Ready)
+                    root.customIconLoadFailed = false;
+            }
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
+            text: root.iconGlyph
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: selectedIcon.glyphSize
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: root.customIconInvalid
+            text: "!"
+            color: root.foreground
+            font.family: root.fontFamily
+            font.pixelSize: selectedIcon.glyphSize
+            font.bold: true
+        }
+    }
+
     BarIconButton {
         id: button
         anchors.fill: parent
         bar: root.bar
         active: root.opened
         iconComponent: Component {
-            Item {
-                ActivityIcon {
-                    anchors.centerIn: parent
-                    visible: root.iconStyle === "Meters"
-                    iconSize: Style.space(14)
-                    cpuUsage: root.activity ? root.activity.cpuUsage : 0
-                    memoryUsage: root.activity ? root.activity.memoryUsage : 0
-                    color: root.foreground
-                    opacity: root.activity && root.activity.available ? 1 : 0.4
-                }
-
-                Image {
-                    anchors.centerIn: parent
-                    visible: root.iconStyle === "Custom" && root.customIconUrl !== ""
-                    width: Style.space(14)
-                    height: width
-                    source: root.customIconUrl
-                    sourceSize.width: 32
-                    sourceSize.height: 32
-                    fillMode: Image.PreserveAspectFit
-                    smooth: true
-                    onSourceChanged: root.customIconLoadFailed = false
-                    onStatusChanged: {
-                        if (status === Image.Error)
-                            root.customIconLoadFailed = true;
-                        else if (status === Image.Ready)
-                            root.customIconLoadFailed = false;
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
-                    text: root.iconGlyph
-                    color: root.foreground
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.icon
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: root.customIconInvalid
-                    text: "!"
-                    color: root.foreground
-                    font.family: root.fontFamily
-                    font.pixelSize: Style.font.icon
-                    font.bold: true
-                }
-            }
+            SelectedIcon {}
         }
         onPressed: function (buttonCode) {
             hoverTooltip.dismiss();
@@ -588,11 +596,9 @@ Panel {
                     foreground: root.foreground
                     fontFamily: root.fontFamily
                     iconComponent: Component {
-                        ActivityIcon {
+                        SelectedIcon {
                             iconSize: Style.font.display
-                            cpuUsage: root.activity ? root.activity.cpuUsage : 0
-                            memoryUsage: root.activity ? root.activity.memoryUsage : 0
-                            color: root.foreground
+                            glyphSize: iconSize
                         }
                     }
                 }
