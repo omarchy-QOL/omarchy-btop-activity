@@ -65,13 +65,23 @@ if ! grep -q '"unavail."' "$WIDGET"; then
   fail "GPU hover no longer uses the short unavail. fallback"
 fi
 
-if ! grep -q 'padLeft("L. click: btop", 14)' "$WIDGET" \
-    || ! grep -q 'padLeft("R. click: menu", 14)' "$WIDGET"; then
+if ! grep -q 'padLeft("L-click: btop", 14)' "$WIDGET" \
+    || ! grep -q 'padLeft("R-click: menu", 14)' "$WIDGET"; then
   fail "tooltip no longer uses the abbreviated click labels"
 fi
 
 if ! grep -q 'padRight(thirdMetric, 50)' "$WIDGET"; then
   fail "tooltip no longer uses the 50-column width"
+fi
+
+if [[ $(grep -o 'padLeft(Math.round(activity\.[a-zA-Z]*), 3)' "$WIDGET" | wc -l) -ne 5 ]]; then
+  fail "tooltip metrics no longer reserve three numeric columns"
+fi
+
+if ! grep -q 'onTooltipChanged: refreshVisibleTooltip()' "$WIDGET" \
+    || ! grep -q 'bar.pendingTooltipTarget === button' "$WIDGET" \
+    || ! grep -q 'bar.tooltipTarget === button' "$WIDGET"; then
+  fail "visible tooltip no longer follows live metric updates"
 fi
 
 echo "ok - tooltip stays plain text"

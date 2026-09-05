@@ -42,12 +42,12 @@ Panel {
     readonly property bool procTree: setting("procTree", false) === true
     readonly property string btopAppId: windowMode === "Tiled" ? "org.omarchy.btop_tiled" : "org.omarchy.btop"
     readonly property bool customIconInvalid: iconStyle === "Custom" && (customIconUrl === "" || customIconLoadFailed)
-    readonly property string cpuTemperatureSuffix: activity && activity.cpuTemperature >= 0 ? " • " + Math.round(activity.cpuTemperature) + "°C" : ""
-    readonly property string gpuUsageText: activity && activity.gpuUsage >= 0 ? Math.round(activity.gpuUsage) + "%" : "--"
+    readonly property string cpuTemperatureSuffix: activity && activity.cpuTemperature >= 0 ? " • " + padLeft(Math.round(activity.cpuTemperature), 3) + "°C" : ""
+    readonly property string gpuUsageText: activity && activity.gpuUsage >= 0 ? padLeft(Math.round(activity.gpuUsage), 3) + "%" : "--"
     readonly property bool gpuTemperatureAvailable: activity && activity.gpuTemperature >= 0
-    readonly property string gpuTemperatureText: gpuTemperatureAvailable ? Math.round(activity.gpuTemperature) + "°C" : "unavail."
+    readonly property string gpuTemperatureText: gpuTemperatureAvailable ? padLeft(Math.round(activity.gpuTemperature), 3) + "°C" : "unavail."
     readonly property string gpuVramText: BtopHumanizer.vramText(activity ? activity.gpuVramUsed : -1, activity ? activity.gpuVramTotal : -1)
-    readonly property string tooltip: alignedTooltip(customIconInvalid ? "Custom icon" : (activity && activity.available ? "RAM: " + Math.round(activity.memoryUsage) + "%" : "RAM: --"), customIconInvalid ? "Unavailable" : (activity && activity.available ? "CPU: " + Math.round(activity.cpuUsage) + "%" + cpuTemperatureSuffix : "CPU: --"), "GPU: " + gpuUsageText + " • " + gpuTemperatureText + " • " + gpuVramText)
+    readonly property string tooltip: alignedTooltip(customIconInvalid ? "Custom icon" : (activity && activity.available ? "RAM: " + padLeft(Math.round(activity.memoryUsage), 3) + "%" : "RAM: --"), customIconInvalid ? "Unavailable" : (activity && activity.available ? "CPU: " + padLeft(Math.round(activity.cpuUsage), 3) + "%" + cpuTemperatureSuffix : "CPU: --"), "GPU: " + gpuUsageText + " • " + gpuTemperatureText + " • " + gpuVramText)
     readonly property var sortingChoices: ["cpu lazy", "cpu direct", "memory", "program"]
     readonly property int customPathIndex: iconStyle === "Custom" ? 1 : -1
     readonly property int keybindingsIndex: iconStyle === "Custom" ? 2 : 1
@@ -85,7 +85,16 @@ Panel {
     }
 
     function alignedTooltip(firstMetric, secondMetric, thirdMetric) {
-        return padRight(firstMetric, 32) + "    " + padLeft("L. click: btop", 14) + "\n" + padRight(secondMetric, 32) + "    " + padLeft("R. click: menu", 14) + "\n" + padRight(thirdMetric, 50);
+        return padRight(firstMetric, 32) + "    " + padLeft("L-click: btop", 14) + "\n" + padRight(secondMetric, 32) + "    " + padLeft("R-click: menu", 14) + "\n" + padRight(thirdMetric, 50);
+    }
+
+    function refreshVisibleTooltip() {
+        if (!bar)
+            return;
+        if (bar.pendingTooltipTarget === button)
+            bar.pendingTooltipText = tooltip;
+        else if (bar.tooltipTarget === button)
+            bar.tooltipText = tooltip;
     }
 
     function shellQuote(value) {
@@ -359,6 +368,7 @@ Panel {
         return value;
     }
 
+    onTooltipChanged: refreshVisibleTooltip()
     onCustomIconPathChanged: if (!customIconField.activeFocus)
         customIconDraft = customIconPath
     onUpdateMsChanged: {
