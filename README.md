@@ -272,6 +272,14 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.2   | 2026-09-05 | native GPU telemetry without compiled helpers     |
+|         |            | keep CPU and RAM sampling responsive              |
+|         |            | show each GPU and distinguish VRAM/shared RAM     |
+|         |            | document optional tools and Intel permissions     |
+|         |            | align tooltip readings and compact legend         |
+|         |            | keep popup and tray icons in sync                 |
+|         |            | place interval arrows left of the input           |
+|         |            | simplify the release table                        |
 | 0.2.1   | 2026-09-02 | fix tooltip text and stream Intel GPU data        |
 |         |            | keep Intel GPU sampling responsive at scale       |
 | 0.2.0   | 2026-08-21 | simplify the release table                        |

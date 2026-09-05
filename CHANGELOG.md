@@ -2,11 +2,28 @@
 
 Notable changes to btop Activity are documented here.
 
-## Unreleased
+## 0.2.2 - 2026-09-05
 
-- Show GPU vRAM in the bar tooltip using btop's shortened byte format, with
-  `unavail. (vRAM)` when the driver does not publish memory totals.
-- Shorten the GPU temperature fallback in the hover to `unavail.`.
+- Replace the compiled GPU helper with kernel readings and optional native
+  NVIDIA, AMD, and Intel monitoring tools.
+- Keep CPU and RAM sampling responsive while optional GPU queries run, with
+  timeouts, stale-reading expiry, and checks for sleeping devices.
+- Show separate GPU rows using stable device identities and vendor ordering.
+- Display VRAM in btop's compact byte format, distinguish shared system RAM,
+  and consistently use `--` for unavailable readings.
+- Fix Intel GPU device selection and document the optional Intel GPU tools
+  package and performance-counter permission.
+- Align tooltip readings and place a compact command legend in the top-right
+  corner, sharing the tooltip's outer borders.
+- Keep the popup header icon in sync with the selected tray icon, including
+  custom images.
+- Move interval preset arrows to the left of the input, with the unit last.
+- Document hardware-specific setup, permissions, and verification commands,
+  and simplify the README release table.
+
+Hardware checks covered a Radeon RX 6400 and two Intel Haswell systems.
+NVIDIA, AMD SMI, and Intel XPU-SMI adapters still need hardware validation;
+the XPU-SMI setup is documented as experimental.
 
 ## 0.2.1 - 2026-09-02
 
