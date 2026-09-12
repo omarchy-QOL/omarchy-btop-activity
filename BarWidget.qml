@@ -58,12 +58,12 @@ Panel {
     ].concat(gpus.length ? gpuRows() : ["GPU: --"]).join("\n")
     readonly property var sortingChoices: ["cpu lazy", "cpu direct", "memory", "program"]
     readonly property int customPathIndex: iconStyle === "Custom" ? 1 : -1
-    readonly property int keybindingsIndex: iconStyle === "Custom" ? 2 : 1
-    readonly property int windowModeIndex: keybindingsIndex + 1
+    readonly property int windowModeIndex: iconStyle === "Custom" ? 2 : 1
     readonly property int updateIndex: windowModeIndex + 1
     readonly property int sortingIndex: updateIndex + 1
     readonly property int treeIndex: updateIndex + 2
-    readonly property int backIndex: updateIndex + 3
+    readonly property int keybindingsIndex: updateIndex + 3
+    readonly property int backIndex: updateIndex + 4
     readonly property int settingsCount: backIndex + 1
 
     Shortcuts.HyprlandBinding {
@@ -584,20 +584,41 @@ Panel {
 
                 PanelHero {
                     width: parent.width
-                    title: root.page === "main" ? "btop" : "btop Settings"
+                    title: root.page === "main" ? "btop" : "Plugin settings"
                     meta: root.page === "main"
                         ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null)
                             + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null)
                             + " · " + root.gpuSummary
-                        : "Private btop.conf"
+                        : ""
                     foreground: root.foreground
                     fontFamily: root.fontFamily
                     iconComponent: Component {
-                        SelectedIcon {
-                            iconSize: Style.font.display
-                            glyphSize: iconSize
+                        Item {
+                            implicitWidth: Style.font.display
+                            implicitHeight: Style.font.display
+
+                            SelectedIcon {
+                                anchors.centerIn: parent
+                                visible: root.page === "main"
+                                iconSize: Style.font.display
+                                glyphSize: iconSize
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: root.page === "settings"
+                                text: ""
+                                color: root.foreground
+                                font.family: root.fontFamily
+                                font.pixelSize: Style.font.display
+                            }
                         }
                     }
+                }
+
+                PanelSeparator {
+                    visible: root.page === "settings"
+                    foreground: root.foreground
                 }
 
                 Column {
@@ -717,23 +738,12 @@ Panel {
                         }
                     }
 
-                    MenuRow {
-                        label: "Keybindings"
-                        value: activityBinding.label
-                        hasCursor: root.settingsIndex === root.keybindingsIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.keybindingsIndex;
-                        }
-                        onClicked: root.launchKeybindings()
-                    }
-
                     PanelSeparator {
                         foreground: root.foreground
                     }
 
                     PanelSectionHeader {
-                        text: "APPEARANCE"
+                        text: "BTOP APPEARANCE"
                         foreground: root.foreground
                         fontFamily: root.fontFamily
                     }
@@ -754,7 +764,7 @@ Panel {
                     }
 
                     PanelSectionHeader {
-                        text: "BTOP"
+                        text: "BTOP live (changes apply immediately)"
                         foreground: root.foreground
                         fontFamily: root.fontFamily
                     }
@@ -930,12 +940,38 @@ Panel {
                     }
 
                     Text {
+                        visible: root.updateEditing
                         width: parent.width
-                        text: root.updateEditing ? "h/l or Left/Right: 1 ms; k/j or Up/Down: presets" : "Changes apply to running btop sessions."
+                        text: "h/l or Left/Right: 1 ms; k/j or Up/Down: presets"
                         color: root.dim
                         font.family: root.fontFamily
                         font.pixelSize: Style.font.caption
                         wrapMode: Text.WordWrap
+                    }
+
+                    PanelSeparator {
+                        foreground: root.foreground
+                    }
+
+                    PanelSectionHeader {
+                        text: "BTOP SETTINGS"
+                        foreground: root.foreground
+                        fontFamily: root.fontFamily
+                    }
+
+                    MenuRow {
+                        label: "Keybindings"
+                        value: activityBinding.label
+                        hasCursor: root.settingsIndex === root.keybindingsIndex
+                        onHovered: function (on) {
+                            if (on)
+                                root.settingsIndex = root.keybindingsIndex;
+                        }
+                        onClicked: root.launchKeybindings()
+                    }
+
+                    PanelSeparator {
+                        foreground: root.foreground
                     }
 
                     MenuRow {

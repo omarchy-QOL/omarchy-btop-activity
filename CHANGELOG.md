@@ -8,6 +8,7 @@ Notable changes to btop Activity are documented here.
   `omarchy-btop-activity` subdirectory.
 - Reuse the single runtime config without backups, lifecycle markers, or
   uninstall cleanup.
+- Clarify and compact the plugin settings sections.
 
 ## 0.2.2 - 2026-09-05
 
