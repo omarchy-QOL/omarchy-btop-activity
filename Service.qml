@@ -28,84 +28,44 @@ QtObject {
   property string _defaultConfigError: ""
   property bool _creatingConfig: false
   property bool _usingDefaultConfigFallback: false
-  property bool baselineReady: false
+  property bool runtimeReady: false
 
   readonly property bool configBusy: _pendingConfig !== null
     || _savingConfig
     || _creatingConfig
-    || !baselineReady
-    || baselineProcess.running
+    || !runtimeReady
+    || runtimeProcess.running
     || defaultConfigProcess.running
-  readonly property string configPath: Quickshell.env("XDG_RUNTIME_DIR")
-    + "/ilyazar-btop.conf"
-  readonly property string configBackupPath: configPath + ".before-plugin"
-  readonly property string configAbsentPath: configPath + ".absent-before-plugin"
-  readonly property string pluginDir: localPath(Qt.resolvedUrl("."))
+  readonly property string runtimeRoot: Quickshell.env("XDG_RUNTIME_DIR")
+  readonly property string runtimeDir: runtimeRoot === "" ? ""
+    : runtimeRoot + "/omarchy-btop-activity"
+  readonly property string configPath: runtimeDir === "" ? ""
+    : runtimeDir + "/btop.conf"
   readonly property string omarchyConfigPath:
     "/usr/share/omarchy/config/btop/btop.conf"
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
     "cpu lazy", "cpu direct"
   ]
-  readonly property string baselineCommand: [
+  readonly property string prepareRuntimeCommand: [
     "set -euo pipefail",
-    "config_path=\"$1\"",
-    "backup_path=\"$2\"",
-    "absent_path=\"$3\"",
-    "if [[ -e $backup_path || -L $backup_path",
-    "    || -e $absent_path || -L $absent_path ]]; then exit 0; fi",
-    "if [[ -e $config_path || -L $config_path ]]; then",
-    "  temporary=\"${backup_path}.tmp.$$\"",
-    "  trap 'rm -rf -- \"$temporary\"' EXIT",
-    "  cp -a -- \"$config_path\" \"$temporary\"",
-    "  mv -T -- \"$temporary\" \"$backup_path\"",
+    "runtime_root=\"$1\"",
+    "runtime_dir=\"$2\"",
+    "config_path=\"$3\"",
+    "[[ -n $runtime_root && $runtime_root == /* ]] || exit 20",
+    "[[ -d $runtime_root && -O $runtime_root",
+    "    && -w $runtime_root && -x $runtime_root ]] || exit 21",
+    "[[ $runtime_dir == \"$runtime_root/omarchy-btop-activity\" ]] || exit 22",
+    "[[ $config_path == \"$runtime_dir/btop.conf\" ]] || exit 22",
+    "if [[ -e $runtime_dir || -L $runtime_dir ]]; then",
+    "  [[ -d $runtime_dir && ! -L $runtime_dir && -O $runtime_dir",
+    "      && -w $runtime_dir && -x $runtime_dir ]] || exit 23",
     "else",
     "  umask 077",
-    "  : >\"$absent_path\"",
-    "fi"
-  ].join("\n")
-  readonly property string teardownCommand: [
-    "plugin_dir=\"$1\"",
-    "plugin_id=\"$2\"",
-    "config_path=\"$3\"",
-    "backup_path=\"$4\"",
-    "absent_path=\"$5\"",
-    "attempts=\"$6\"",
-    "interval=\"$7\"",
-    "plugin_state=absent",
-    "if [[ -e $plugin_dir ]]; then",
-    "  plugin_state=unknown",
-    "  plugin_filter='[.[] | select(.id == $id)]'",
-    "  plugin_filter+=' | if length != 1 then \"unknown\"'",
-    "  plugin_filter+=' elif .[0].enabled == true then \"enabled\"'",
-    "  plugin_filter+=' elif .[0].enabled == false then \"disabled\"'",
-    "  plugin_filter+=' else \"unknown\" end'",
-    "  for ((attempt = 0; attempt < attempts; attempt++)); do",
-    "    plugin_json=\"\"",
-    "    if plugin_json=\"$(omarchy plugin list --json 2>/dev/null)\"; then",
-    "      plugin_state=\"$(jq -r --arg id \"$plugin_id\" \\",
-    "        \"$plugin_filter\" <<<\"$plugin_json\" 2>/dev/null \\",
-    "        || printf 'unknown')\"",
-    "      [[ $plugin_state == enabled ]] && exit 0",
-    "      [[ $plugin_state == disabled ]] && break",
-    "    fi",
-    "    sleep \"$interval\"",
-    "  done",
-    "  [[ $plugin_state == unknown && -e $plugin_dir ]] && exit 0",
+    "  mkdir -m 0700 -- \"$runtime_dir\" || exit 24",
     "fi",
-    "if [[ -e $backup_path || -L $backup_path ]]; then",
-    "  rm -f -- \"$config_path\" \"$absent_path\"",
-    "  mv -T -- \"$backup_path\" \"$config_path\"",
-    "elif [[ -e $absent_path || -L $absent_path ]]; then",
-    "  rm -f -- \"$config_path\" \"$backup_path\" \"$absent_path\"",
-    "fi"
+    "chmod 0700 -- \"$runtime_dir\" || exit 24"
   ].join("\n")
-
-  function localPath(url) {
-    var value = String(url || "")
-    if (value.indexOf("file://") === 0) value = value.substring(7)
-    return decodeURIComponent(value).replace(/\/$/, "")
-  }
 
   function validatedConfig(interval, sorting, tree) {
     var update = UpdateInterval.parse(interval)
@@ -154,15 +114,6 @@ QtObject {
       configError = String(error)
       return false
     }
-  }
-
-  function teardown() {
-    if (baselineProcess.running) baselineProcess.running = false
-    Quickshell.execDetached([
-      "bash", "-c", teardownCommand, "btop-runtime-teardown",
-      pluginDir, "ilyazar.btop", configPath, configBackupPath,
-      configAbsentPath, "10", "0.05"
-    ])
   }
 
   function handleConfigLoaded(raw, createFile) {
@@ -286,17 +237,23 @@ QtObject {
     }
   }
 
-  property Process baselineProcess: Process {
-    id: baselineProcess
+  property Process runtimeProcess: Process {
+    id: runtimeProcess
     running: true
     command: [
-      "bash", "-c", root.baselineCommand, "btop-runtime-baseline",
-      root.configPath, root.configBackupPath, root.configAbsentPath
+      "bash", "-c", root.prepareRuntimeCommand, "btop-runtime-prepare",
+      root.runtimeRoot, root.runtimeDir, root.configPath
     ]
     onExited: function(exitCode) {
-      root.baselineReady = exitCode === 0
-      if (!root.baselineReady)
-        root.configError = "Could not protect existing btop runtime settings"
+      root.runtimeReady = exitCode === 0
+      if (!root.runtimeReady) {
+        root.configReady = false
+        root.configError = exitCode === 20
+          ? "XDG_RUNTIME_DIR is not available"
+          : exitCode === 21
+            ? "XDG_RUNTIME_DIR is not owned and writable by this user"
+            : "Could not prepare the private btop runtime directory"
+      }
     }
   }
 
@@ -349,6 +306,4 @@ QtObject {
     running: false
     command: []
   }
-
-  Component.onDestruction: root.teardown()
 }

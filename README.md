@@ -275,15 +275,23 @@ backend's installation, permissions, or live readings on suitable hardware.
 
 ## Config safety and troubleshooting
 
-The plugin stores its choices in Omarchy's `shell.json` and generates a private
-btop config under `$XDG_RUNTIME_DIR`. The normal user `btop.conf` is never read
-or written.
+The plugin stores its choices in Omarchy's `shell.json` and generates its
+private btop config at
+`$XDG_RUNTIME_DIR/omarchy-btop-activity/btop.conf`. It verifies that the
+runtime directory is available, user-owned, and writable before creating its
+own private directory. The normal user `btop.conf` is never read or written.
 
 The runtime file is created from Omarchy's packaged btop config. Quickshell
 writes it atomically, and a running btop receives its supported config-reload
-signal only after a successful change. Disabling or removing the plugin restores
-a file that existed before the plugin was enabled, or removes the file it
-created.
+signal only after a successful change. If the file already exists, the plugin
+reuses it and updates the btop settings stored in `shell.json`. Otherwise, it
+creates the file when needed.
+
+Omarchy plugins have no uninstall hook. Removing the plugin can leave this
+temporary directory until the user runtime is cleared. That often happens at
+the final logout and always happens on reboot; user lingering can delay it. The
+leftover is harmless: normal btop never reads it, and reinstalling the plugin
+reuses it. No marker or backup files are created.
 
 GPU temperature and VRAM depend on driver support. If unavailable, the hover
 says `--` or `-- (vRAM)`. See the hardware-specific
@@ -296,8 +304,9 @@ and verification commands.
 omarchy plugin remove ilyazar.btop
 ```
 
-Removing the plugin removes its private btop settings. It does not remove btop
-or change btop's normal configuration.
+Removing the plugin stops using its private btop settings. It does not remove
+btop or change btop's normal configuration. The temporary generated file may
+remain until the user runtime is cleared.
 
 ## Roadmap and releases
 

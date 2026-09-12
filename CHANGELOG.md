@@ -2,6 +2,13 @@
 
 Notable changes to btop Activity are documented here.
 
+## Unreleased
+
+- Validate the user runtime directory and keep the generated btop config in an
+  `omarchy-btop-activity` subdirectory.
+- Reuse the single runtime config without backups, lifecycle markers, or
+  uninstall cleanup.
+
 ## 0.2.2 - 2026-09-05
 
 - Replace the compiled GPU helper with kernel readings and optional native
