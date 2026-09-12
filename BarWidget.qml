@@ -45,12 +45,10 @@ Panel {
     readonly property var gpus: activity ? activity.gpus : []
     readonly property string gpuSummary: gpus.length === 1
         ? "GPU " + (gpus[0].status === "sleeping" ? "asleep"
-            : percentage(gpus[0].usage)
-                + (gpus[0].scope === "clients" ? " (clients)" : ""))
+            : percentage(gpus[0].usage))
         : gpus.length + " GPUs"
     readonly property string cpuTemperatureSuffix: " • "
         + temperature(activity ? activity.cpuTemperature : null)
-        + (activity && activity.cpuTemperatureKind === "control" ? " (control)" : "")
     readonly property string tooltipMetrics: [
         customIconInvalid ? "Custom icon"
             : metricPrefix("RAM") + percentage(activity ? activity.memoryUsage : null),
@@ -115,9 +113,8 @@ Panel {
         var rows = gpus.map(function (gpu, index) {
             var memoryLabel = gpu.memoryKind === "shared" ? "shared GPU"
                 : gpu.memoryKind === "dedicated" ? "vRAM" : "GPU memory";
-            var usage = percentage(gpu.usage) + (gpu.scope === "clients" ? " (clients)" : "");
-            var heat = temperature(gpu.temperature)
-                + (gpu.temperature !== null && gpu.temperatureKind === "hotspot" ? " (hotspot)" : "");
+            var usage = percentage(gpu.usage);
+            var heat = temperature(gpu.temperature);
             usageWidth = Math.max(usageWidth, usage.length);
             temperatureWidth = Math.max(temperatureWidth, heat.length);
             return {
@@ -610,7 +607,7 @@ Panel {
 
                     MenuRow {
                         label: "Start btop"
-                        iconText: "󰍛"
+                        selectedIcon: true
                         hasCursor: root.mainIndex === 0
                         onHovered: function (on) {
                             if (on)
@@ -962,6 +959,7 @@ Panel {
         property string label: ""
         property string value: ""
         property string iconText: ""
+        property bool selectedIcon: false
         property bool enabled: true
 
         signal clicked
@@ -984,6 +982,13 @@ Panel {
                 color: root.foreground
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.icon
+                Layout.alignment: Qt.AlignVCenter
+            }
+
+            SelectedIcon {
+                visible: row.selectedIcon
+                iconSize: Style.font.icon
+                glyphSize: iconSize
                 Layout.alignment: Qt.AlignVCenter
             }
 

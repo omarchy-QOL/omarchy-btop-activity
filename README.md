@@ -208,6 +208,13 @@ reinstalling the package. This reader supplies usage, not GPU temperature.
 Integrated graphics can share system RAM with the CPU instead of having
 dedicated VRAM. The plugin currently selects this CLI only for `i915`, not `xe`.
 
+For Intel usage, the source order is a kernel `gpu_busy_percent` counter,
+`intel_gpu_top` on i915, Fastfetch, XPU-SMI, and finally DRM `fdinfo`. Missing
+or failed readers are skipped. The `fdinfo` fallback covers only clients
+visible to the current user and may not represent the whole device. Btop's own
+GPU panel uses an embedded i915 PMU reader. Any `CAP_PERFMON` granted to the
+btop executable applies only to btop and cannot be reused by the plugin.
+
 ### NVIDIA GPUs
 
 On supported NVIDIA systems, Omarchy normally installs `nvidia-smi` with the
