@@ -9,6 +9,7 @@ Notable changes to btop Activity are documented here.
 - Reuse the single runtime config without backups, lifecycle markers, or
   uninstall cleanup.
 - Clarify and compact the plugin settings sections.
+- Add a live transparent-background setting for plugin-launched btop sessions.
 
 ## 0.2.2 - 2026-09-05
 

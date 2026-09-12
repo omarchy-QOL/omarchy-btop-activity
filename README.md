@@ -42,14 +42,15 @@ See btop launch from the bar, switch between floating and tiled layouts, apply a
 
 The plugin keeps a short list of useful controls before opening btop:
 
-| Setting         | Choices                                  |
-| --------------- | ---------------------------------------- |
-| Tray icon       | Meters, CPU, Pulse, or a custom image    |
-| Keybindings     | opens the Omarchy user bindings file     |
-| Window mode     | floating or tiled                        |
-| Update interval | any whole number from 100 ms to one day  |
-| Process sorting | lazy CPU, direct CPU, memory, or program |
-| Process tree    | on or off                                |
+| Setting                | Choices                                  |
+| ---------------------- | ---------------------------------------- |
+| Tray icon              | Meters, CPU, Pulse, or a custom image    |
+| Window mode            | floating or tiled                        |
+| Transparent background | on or off                                |
+| Update interval        | any whole number from 100 ms to one day  |
+| Process sorting        | lazy CPU, direct CPU, memory, or program |
+| Process tree           | on or off                                |
+| Keybindings            | opens the Omarchy user bindings file     |
 
 For the update interval, press Enter or click the value to edit it. Left/Right
 (or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
@@ -90,9 +91,10 @@ Depending on the installed icon themes, useful paths include:
 
 Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
 
-Under **Appearance**, choose whether btop opens tiled or floating. The setting
-applies to both left-click and Help. Floating is the default and restores
-Omarchy's centered 875 x 600 window size when selected.
+Under **btop appearance**, choose whether btop opens tiled or floating and
+whether it paints its own background. The window mode applies to both
+left-click and Help. Floating is the default and restores Omarchy's centered
+875 x 600 window size when selected.
 
 ## Optional hardware setup
 

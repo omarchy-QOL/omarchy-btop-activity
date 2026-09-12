@@ -34,6 +34,7 @@ Panel {
     readonly property string customIconUrl: resolveIconPath(customIconPath)
     readonly property string keybindingsScript: localPath(Qt.resolvedUrl("helpers/open-keybindings.sh"))
     readonly property string windowMode: String(setting("windowMode", "Floating"))
+    readonly property bool transparentBackground: setting("transparentBackground", false) === true
     readonly property int updateMs: intSetting("updateMs", 2000, UpdateInterval.minimum, UpdateInterval.maximum)
     readonly property var updateDraftValue: UpdateInterval.parse(updateDraft)
     readonly property bool updateDraftInvalid: updateEditing && updateDraftValue === null
@@ -59,7 +60,8 @@ Panel {
     readonly property var sortingChoices: ["cpu lazy", "cpu direct", "memory", "program"]
     readonly property int customPathIndex: iconStyle === "Custom" ? 1 : -1
     readonly property int windowModeIndex: iconStyle === "Custom" ? 2 : 1
-    readonly property int updateIndex: windowModeIndex + 1
+    readonly property int backgroundIndex: windowModeIndex + 1
+    readonly property int updateIndex: backgroundIndex + 1
     readonly property int sortingIndex: updateIndex + 1
     readonly property int treeIndex: updateIndex + 2
     readonly property int keybindingsIndex: updateIndex + 3
@@ -291,7 +293,8 @@ Panel {
         if (!activity || configSynced || activity.configBusy)
             return;
         configSynced = true;
-        if (!activity.setConfig(updateMs, procSorting, procTree))
+        if (!activity.setConfig(updateMs, procSorting, procTree,
+                                transparentBackground))
             configSynced = false;
     }
 
@@ -337,6 +340,11 @@ Panel {
             var mode = nextChoice(["Floating", "Tiled"], windowMode, direction);
             applyWindowMode(mode);
             persistPluginSetting("windowMode", mode);
+            return;
+        }
+        if (index === backgroundIndex) {
+            persistPluginSetting("transparentBackground",
+                                 !transparentBackground);
             return;
         }
         if (!activity || activity.configBusy)
@@ -418,6 +426,10 @@ Panel {
         syncBtopConfig();
     }
     onProcTreeChanged: {
+        configSynced = false;
+        syncBtopConfig();
+    }
+    onTransparentBackgroundChanged: {
         configSynced = false;
         syncBtopConfig();
     }
@@ -757,6 +769,20 @@ Panel {
                                 root.settingsIndex = root.windowModeIndex;
                         }
                         onClicked: root.cycleSetting(root.windowModeIndex, 1)
+                    }
+
+                    MenuRow {
+                        label: "Transparent background"
+                        value: root.activity && root.activity.configReady
+                            ? (root.transparentBackground ? "On" : "Off")
+                            : "Loading…"
+                        enabled: root.activity && !root.activity.configBusy
+                        hasCursor: root.settingsIndex === root.backgroundIndex
+                        onHovered: function (on) {
+                            if (on)
+                                root.settingsIndex = root.backgroundIndex;
+                        }
+                        onClicked: root.cycleSetting(root.backgroundIndex, 1)
                     }
 
                     PanelSeparator {

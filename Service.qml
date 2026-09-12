@@ -67,7 +67,7 @@ QtObject {
     "chmod 0700 -- \"$runtime_dir\" || exit 24"
   ].join("\n")
 
-  function validatedConfig(interval, sorting, tree) {
+  function validatedConfig(interval, sorting, tree, transparentBackground) {
     var update = UpdateInterval.parse(interval)
     var order = String(sorting)
     if (update === null)
@@ -76,7 +76,14 @@ QtObject {
       throw new Error("Invalid btop process sorting")
     if (tree !== true && tree !== false)
       throw new Error("Invalid btop process tree value")
-    return { updateMs: update, procSorting: order, procTree: tree }
+    if (transparentBackground !== true && transparentBackground !== false)
+      throw new Error("Invalid btop background value")
+    return {
+      updateMs: update,
+      procSorting: order,
+      procTree: tree,
+      transparentBackground: transparentBackground
+    }
   }
 
   function patchConfig(raw, key, value) {
@@ -101,10 +108,11 @@ QtObject {
     return lines.join("\n") + "\n"
   }
 
-  function setConfig(interval, sorting, tree) {
+  function setConfig(interval, sorting, tree, transparentBackground) {
     if (configBusy) return false
     try {
-      var next = validatedConfig(interval, sorting, tree)
+      var next = validatedConfig(
+        interval, sorting, tree, transparentBackground)
       updateMs = next.updateMs
       _pendingConfig = next
       configError = ""
@@ -131,6 +139,8 @@ QtObject {
     text = patchConfig(text, "update_ms", String(values.updateMs))
     text = patchConfig(text, "proc_sorting", JSON.stringify(values.procSorting))
     text = patchConfig(text, "proc_tree", String(values.procTree))
+    text = patchConfig(
+      text, "theme_background", String(!values.transparentBackground))
     if (!createFile && text === current) {
       configReady = true
       configError = ""
