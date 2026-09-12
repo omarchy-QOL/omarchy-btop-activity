@@ -2,6 +2,15 @@
 
 Notable changes to btop Activity are documented here.
 
+## Unreleased
+
+- Read defaults from a shipped `settings.toml`: `poll_intervals` sets the
+  interval ladder the Update interval arrows step through, and `left_click`
+  chooses whether a left click opens btop or toggles it (@gw7523).
+- Add `helpers/toggle-btop.sh`, which closes the plugin's btop window when one
+  is open and launches btop otherwise. It backs `left_click = "toggle"` and can
+  be bound directly, so one key both opens and closes btop (@gw7523).
+
 ## 0.2.2 - 2026-09-05
 
 - Replace the compiled GPU helper with kernel readings and optional native

@@ -1,0 +1,11 @@
+# btop Activity defaults. Edit and restart the shell to apply:
+#
+#   omarchy restart shell
+
+# Interval ladder, in milliseconds, that the Update interval arrows step
+# through. Any whole number from 100 ms to one day can still be typed.
+poll_intervals = [250, 500, 1000, 2000, 5000]
+
+# What a left click on the widget does. "open" launches or focuses btop;
+# "toggle" also closes the window when btop is already open.
+left_click = "open"

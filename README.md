@@ -52,10 +52,10 @@ The plugin keeps a short list of useful controls before opening btop:
 | Process tree    | on or off                                |
 
 For the update interval, press Enter or click the value to edit it. Left/Right
-(or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
-1000, 2000, and 5000 ms while still letting you type any value in btop's full
-range. From a custom value, they jump to the next preset above or below it and
-wrap around at the ends.
+(or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through the presets
+in [`settings.toml`](#settingstoml) while still letting you type any value in
+btop's full range. From a custom value, they jump to the next preset above or
+below it and wrap around at the ends.
 
 Edit `~/.config/hypr/bindings.lua` directly, or select **Keybindings** in the
 plugin settings to open it. The button prefers Neovim, jumping to an existing
@@ -93,6 +93,33 @@ Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
 Under **Appearance**, choose whether btop opens tiled or floating. The setting
 applies to both left-click and Help. Floating is the default and restores
 Omarchy's centered 875 x 600 window size when selected.
+
+### settings.toml
+
+Two defaults live in the plugin's `settings.toml` rather than in the popup:
+
+| Key              | Default                      | Meaning                            |
+| ---------------- | ---------------------------- | ---------------------------------- |
+| `poll_intervals` | `[250, 500, 1000, 2000, 5000]` | ladder the interval arrows step through |
+| `left_click`     | `"open"`                     | `"open"` or `"toggle"`             |
+
+Values outside btop's 100 ms to one day range, and repeated ones, are dropped;
+an unreadable or empty file leaves the defaults above in place. Apply an edit
+with `omarchy restart shell`.
+
+With `left_click = "toggle"`, clicking the widget while btop is open closes the
+window instead of focusing it. The same script can be bound directly, so one
+key both opens and closes btop:
+
+```lua
+hl.unbind("SUPER + CTRL + T")
+o.bind("SUPER + CTRL + T", "Activity", os.getenv("HOME")
+  .. "/.config/omarchy/plugins/ilyazar.btop/helpers/toggle-btop.sh")
+```
+
+Invoked bare like that, the script takes the window mode from `shell.json`,
+closes any btop window the plugin opened in either mode, and otherwise launches
+btop with the plugin's runtime config when one exists.
 
 ## Optional hardware setup
 
