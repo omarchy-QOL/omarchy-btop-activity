@@ -2,7 +2,7 @@
 
 Notable changes to btop Activity are documented here.
 
-## Unreleased
+## 0.2.3 - 2026-09-13
 
 - Validate the user runtime directory and keep the generated btop config in an
   `omarchy-btop-activity` subdirectory.
@@ -19,8 +19,8 @@ Notable changes to btop Activity are documented here.
 - Keep CPU and RAM sampling responsive while optional GPU queries run, with
   timeouts, stale-reading expiry, and checks for sleeping devices.
 - Show separate GPU rows using stable device identities and vendor ordering.
-- Display VRAM in btop's compact byte format, distinguish shared system RAM,
-  and consistently use `--` for unavailable readings.
+- Display VRAM in btop's compact byte format, distinguish shared system RAM, and
+  consistently use `--` for unavailable readings.
 - Fix Intel GPU device selection and document the optional Intel GPU tools
   package and performance-counter permission.
 - Align tooltip readings and place a compact command legend in the top-right
@@ -28,14 +28,14 @@ Notable changes to btop Activity are documented here.
 - Keep the popup header icon in sync with the selected tray icon, including
   custom images.
 - Move interval preset arrows to the left of the input, with the unit last.
-- Document hardware-specific setup, permissions, and verification commands,
-  and simplify the README release table.
+- Document hardware-specific setup, permissions, and verification commands, and
+  simplify the README release table.
 - Put quickstart and settings before optional hardware setup, fix the
   development instructions, and refresh the marketplace description.
 
-Hardware checks covered a Radeon RX 6400 and two Intel Haswell systems.
-NVIDIA, AMD SMI, and Intel XPU-SMI adapters still need hardware validation;
-the XPU-SMI setup is documented as experimental.
+Hardware checks covered a Radeon RX 6400 and two Intel Haswell systems. NVIDIA,
+AMD SMI, and Intel XPU-SMI adapters still need hardware validation; the XPU-SMI
+setup is documented as experimental.
 
 ## 0.2.1 - 2026-09-02
 
@@ -73,8 +73,8 @@ the XPU-SMI setup is documented as experimental.
 
 ## 0.1.8 - 2026-08-14
 
-- Add a demo of btop launch, floating and tiled modes, live refresh changes,
-  and keybinding updates.
+- Add a demo of btop launch, floating and tiled modes, live refresh changes, and
+  keybinding updates.
 
 ## 0.1.7 - 2026-08-14
 
@@ -83,8 +83,7 @@ the XPU-SMI setup is documented as experimental.
 
 ## 0.1.6 - 2026-08-14
 
-- Show the effective Activity shortcut in settings, including its unbound
-  state.
+- Show the effective Activity shortcut in settings, including its unbound state.
 - Keep custom icon controls next to the tray icon selection and share the
   Hyprland shortcut helpers.
 
@@ -108,8 +107,8 @@ the XPU-SMI setup is documented as experimental.
 
 ## 0.1.2 - 2026-08-12
 
-- Isolate plugin settings from the normal user btop config and remove them
-  with the plugin.
+- Isolate plugin settings from the normal user btop config and remove them with
+  the plugin.
 
 ## 0.1.1 - 2026-08-12
 

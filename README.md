@@ -322,6 +322,10 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.3   | 2026-09-13 | isolate and reuse a private runtime config        |
+|         |            | compact settings and improve their navigation     |
+|         |            | apply transparent backgrounds live                |
+|         |            | show the identified default render GPU            |
 | 0.2.2   | 2026-09-05 | native GPU telemetry without compiled helpers     |
 |         |            | keep CPU and RAM sampling responsive              |
 |         |            | show each GPU and distinguish VRAM/shared RAM     |
