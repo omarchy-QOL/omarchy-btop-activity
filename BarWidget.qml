@@ -1,8 +1,11 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Ui
+import "components" as Components
 import "lib/shortcuts" as Shortcuts
 import "lib/UpdateInterval.js" as UpdateInterval
 import "lib/BtopHumanizer.js" as BtopHumanizer
@@ -29,11 +32,12 @@ Panel {
     readonly property color urgent: bar ? bar.urgent : Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
-    readonly property string iconGlyph: iconStyle === "CPU" ? "󰍛" : ""
     readonly property string customIconPath: String(setting("customIconPath", ""))
     readonly property string customIconUrl: resolveIconPath(customIconPath)
+    readonly property string helpScript: localPath(Qt.resolvedUrl("helpers/open-btop-help.sh"))
     readonly property string keybindingsScript: localPath(Qt.resolvedUrl("helpers/open-keybindings.sh"))
     readonly property string windowMode: String(setting("windowMode", "Floating"))
+    readonly property bool transparentBackground: setting("transparentBackground", false) === true
     readonly property int updateMs: intSetting("updateMs", 2000, UpdateInterval.minimum, UpdateInterval.maximum)
     readonly property var updateDraftValue: UpdateInterval.parse(updateDraft)
     readonly property bool updateDraftInvalid: updateEditing && updateDraftValue === null
@@ -43,10 +47,14 @@ Panel {
     readonly property string btopAppId: windowMode === "Tiled" ? "org.omarchy.btop_tiled" : "org.omarchy.btop"
     readonly property bool customIconInvalid: iconStyle === "Custom" && (customIconUrl === "" || customIconLoadFailed)
     readonly property var gpus: activity ? activity.gpus : []
-    readonly property string gpuSummary: gpus.length === 1
-        ? "GPU " + (gpus[0].status === "sleeping" ? "asleep"
-            : percentage(gpus[0].usage))
-        : gpus.length + " GPUs"
+    readonly property var defaultRendererGpu: gpus.find(function (gpu) {
+        return gpu.defaultRenderer === true;
+    })
+    readonly property string gpuSummary: {
+        var gpu = gpus.length === 1 ? gpus[0] : defaultRendererGpu;
+        return gpu ? "GPU " + (gpu.status === "sleeping" ? "asleep"
+            : percentage(gpu.usage)) : gpus.length + " GPUs";
+    }
     readonly property string cpuTemperatureSuffix: " • "
         + temperature(activity ? activity.cpuTemperature : null)
     readonly property string tooltipMetrics: [
@@ -61,9 +69,10 @@ Panel {
     readonly property int keybindingsIndex: iconStyle === "Custom" ? 2 : 1
     readonly property int windowModeIndex: keybindingsIndex + 1
     readonly property int updateIndex: windowModeIndex + 1
-    readonly property int sortingIndex: updateIndex + 1
-    readonly property int treeIndex: updateIndex + 2
-    readonly property int backIndex: updateIndex + 3
+    readonly property int treeIndex: updateIndex + 1
+    readonly property int sortingIndex: updateIndex + 2
+    readonly property int backgroundIndex: updateIndex + 3
+    readonly property int backIndex: updateIndex + 4
     readonly property int settingsCount: backIndex + 1
 
     Shortcuts.HyprlandBinding {
@@ -134,10 +143,6 @@ Panel {
         });
     }
 
-    function shellQuote(value) {
-        return "'" + String(value).replace(/'/g, "'\\''") + "'";
-    }
-
     function localPath(url) {
         var value = String(url || "");
         if (value.indexOf("file://") === 0)
@@ -183,7 +188,9 @@ Panel {
     function execBtopHelp() {
         if (!activity)
             return;
-        Quickshell.execDetached(["bash", "-lc", "omarchy-launch-or-focus-tui --app-id=" + btopAppId + " btop --config " + shellQuote(activity.configPath) + " " + ">/dev/null 2>&1 & " + "for _ in {1..30}; do " + "if hyprctl clients -j | jq -e " + "'.[] | select(.class == \"" + btopAppId + "\")' " + ">/dev/null; then " + "sleep 0.6; " + "hyprctl dispatch " + "'hl.dsp.send_key_state({ mods = \"SHIFT\", key = \"slash\", " + "state = \"down\", window = \"class:" + btopAppId + "\" })' " + ">/dev/null; sleep 0.05; hyprctl dispatch " + "'hl.dsp.send_key_state({ mods = \"SHIFT\", key = \"slash\", " + "state = \"up\", window = \"class:" + btopAppId + "\" })' " + ">/dev/null; " + "exit; fi; sleep 0.1; done"]);
+        Quickshell.execDetached([
+            "bash", helpScript, btopAppId, activity.configPath
+        ]);
     }
 
     function launchBtop() {
@@ -291,8 +298,14 @@ Panel {
         if (!activity || configSynced || activity.configBusy)
             return;
         configSynced = true;
-        if (!activity.setConfig(updateMs, procSorting, procTree))
+        if (!activity.setConfig(updateMs, procSorting, procTree,
+                                transparentBackground))
             configSynced = false;
+    }
+
+    function requestConfigSync() {
+        configSynced = false;
+        syncBtopConfig();
     }
 
     function applyWindowMode(mode) {
@@ -337,6 +350,11 @@ Panel {
             var mode = nextChoice(["Floating", "Tiled"], windowMode, direction);
             applyWindowMode(mode);
             persistPluginSetting("windowMode", mode);
+            return;
+        }
+        if (index === backgroundIndex) {
+            persistPluginSetting("transparentBackground",
+                                 !transparentBackground);
             return;
         }
         if (!activity || activity.configBusy)
@@ -410,21 +428,12 @@ Panel {
     onUpdateMsChanged: {
         if (!updateEditing)
             updateDraft = String(updateMs);
-        configSynced = false;
-        syncBtopConfig();
+        requestConfigSync();
     }
-    onProcSortingChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
-    onProcTreeChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
-    onActivityChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
+    onProcSortingChanged: requestConfigSync()
+    onProcTreeChanged: requestConfigSync()
+    onTransparentBackgroundChanged: requestConfigSync()
+    onActivityChanged: requestConfigSync()
 
     Connections {
         target: root.activity
@@ -451,59 +460,20 @@ Panel {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
 
-    component SelectedIcon: Item {
-        id: selectedIcon
-        property real iconSize: Style.space(14)
-        property real glyphSize: Style.font.icon
-        implicitWidth: iconSize
-        implicitHeight: iconSize
+    component BtopIcon: Components.SelectedIcon {
+        iconSize: Style.space(14)
+        glyphSize: Style.font.icon
 
-        ActivityIcon {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "Meters"
-            iconSize: selectedIcon.iconSize
-            cpuUsage: root.activity ? root.activity.cpuUsage : 0
-            memoryUsage: root.activity ? root.activity.memoryUsage : 0
-            color: root.foreground
-            opacity: root.activity && root.activity.available ? 1 : 0.4
-        }
-
-        Image {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "Custom" && root.customIconUrl !== ""
-            width: selectedIcon.iconSize
-            height: width
-            source: root.customIconUrl
-            sourceSize.width: 32
-            sourceSize.height: 32
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            onSourceChanged: root.customIconLoadFailed = false
-            onStatusChanged: {
-                if (status === Image.Error)
-                    root.customIconLoadFailed = true;
-                else if (status === Image.Ready)
-                    root.customIconLoadFailed = false;
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
-            text: root.iconGlyph
-            color: root.foreground
-            font.family: root.fontFamily
-            font.pixelSize: selectedIcon.glyphSize
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: root.customIconInvalid
-            text: "!"
-            color: root.foreground
-            font.family: root.fontFamily
-            font.pixelSize: selectedIcon.glyphSize
-            font.bold: true
+        iconStyle: root.iconStyle
+        customIconUrl: root.customIconUrl
+        customIconInvalid: root.customIconInvalid
+        cpuUsage: root.activity ? root.activity.cpuUsage : 0
+        memoryUsage: root.activity ? root.activity.memoryUsage : 0
+        activityAvailable: root.activity && root.activity.available
+        foreground: root.foreground
+        fontFamily: root.fontFamily
+        onIconLoadFailed: function (failed) {
+            root.customIconLoadFailed = failed;
         }
     }
 
@@ -513,7 +483,7 @@ Panel {
         bar: root.bar
         active: root.opened
         iconComponent: Component {
-            SelectedIcon {}
+            BtopIcon {}
         }
         onPressed: function (buttonCode) {
             hoverTooltip.dismiss();
@@ -524,7 +494,7 @@ Panel {
         }
     }
 
-    ActivityTooltip {
+    Components.ActivityTooltip {
         id: hoverTooltip
         anchorItem: button
         bar: root.bar
@@ -582,22 +552,52 @@ Panel {
                 width: parent.width
                 spacing: Style.space(10)
 
-                PanelHero {
+                RowLayout {
                     width: parent.width
-                    title: root.page === "main" ? "btop" : "btop Settings"
-                    meta: root.page === "main"
-                        ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null)
-                            + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null)
-                            + " · " + root.gpuSummary
-                        : "Private btop.conf"
-                    foreground: root.foreground
-                    fontFamily: root.fontFamily
-                    iconComponent: Component {
-                        SelectedIcon {
-                            iconSize: Style.font.display
-                            glyphSize: iconSize
+                    spacing: Style.space(14)
+
+                    BtopIcon {
+                        iconSize: Style.space(32)
+                        glyphSize: iconSize
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    Column {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignVCenter
+                        spacing: Style.space(2)
+
+                        Text {
+                            width: parent.width
+                            text: root.page === "main" ? "btop" : "btop activity settings"
+                            textFormat: Text.PlainText
+                            color: root.foreground
+                            font.family: root.fontFamily
+                            font.pixelSize: Style.font.title
+                            font.bold: true
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            width: parent.width
+                            text: (root.page === "main"
+                                ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null)
+                                    + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null)
+                                    + " · " + root.gpuSummary
+                                : "Changes apply to running btop sessions").toUpperCase()
+                            textFormat: Text.PlainText
+                            color: root.dim
+                            font.family: root.fontFamily
+                            font.pixelSize: Style.fontPx(0.75)
+                            font.bold: true
+                            font.letterSpacing: 1
+                            elide: Text.ElideRight
                         }
                     }
+                }
+
+                PanelSeparator {
+                    foreground: root.foreground
                 }
 
                 Column {
@@ -608,11 +608,7 @@ Panel {
                     MenuRow {
                         label: "Start btop"
                         selectedIcon: true
-                        hasCursor: root.mainIndex === 0
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 0;
-                        }
+                        navigationIndex: 0
                         onClicked: root.launchBtop()
                     }
 
@@ -620,11 +616,7 @@ Panel {
                         label: "Settings"
                         iconText: ""
                         value: "›"
-                        hasCursor: root.mainIndex === 1
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 1;
-                        }
+                        navigationIndex: 1
                         onClicked: root.showSettings()
                     }
 
@@ -635,11 +627,7 @@ Panel {
                     MenuRow {
                         label: "Help"
                         iconText: "?"
-                        hasCursor: root.mainIndex === 2
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 2;
-                        }
+                        navigationIndex: 2
                         onClicked: root.launchBtopHelp()
                     }
                 }
@@ -658,11 +646,7 @@ Panel {
                     MenuRow {
                         label: "Tray icon"
                         value: root.iconStyle
-                        hasCursor: root.settingsIndex === 0
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = 0;
-                        }
+                        navigationIndex: 0
                         onClicked: root.cycleSetting(0, 1)
                     }
 
@@ -720,32 +704,14 @@ Panel {
                     MenuRow {
                         label: "Keybindings"
                         value: activityBinding.label
-                        hasCursor: root.settingsIndex === root.keybindingsIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.keybindingsIndex;
-                        }
+                        navigationIndex: root.keybindingsIndex
                         onClicked: root.launchKeybindings()
-                    }
-
-                    PanelSeparator {
-                        foreground: root.foreground
-                    }
-
-                    PanelSectionHeader {
-                        text: "APPEARANCE"
-                        foreground: root.foreground
-                        fontFamily: root.fontFamily
                     }
 
                     MenuRow {
                         label: "Hyprland window mode"
                         value: root.windowMode
-                        hasCursor: root.settingsIndex === root.windowModeIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.windowModeIndex;
-                        }
+                        navigationIndex: root.windowModeIndex
                         onClicked: root.cycleSetting(root.windowModeIndex, 1)
                     }
 
@@ -797,12 +763,12 @@ Panel {
                                 spacing: 0
 
                                 PanelActionButton {
-                                    iconText: "^"
+                                    iconText: "󰅃"
                                     tooltipText: "Next preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.bodySmall
-                                    size: Style.space(20)
+                                    fontSize: Style.font.iconLarge
+                                    size: Style.space(24)
                                     height: updateField.implicitHeight / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
@@ -813,12 +779,12 @@ Panel {
                                 }
 
                                 PanelActionButton {
-                                    iconText: "v"
+                                    iconText: "󰅀"
                                     tooltipText: "Previous preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.bodySmall
-                                    size: Style.space(20)
+                                    fontSize: Style.font.iconLarge
+                                    size: Style.space(24)
                                     height: updateField.implicitHeight / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
@@ -896,27 +862,29 @@ Panel {
                     }
 
                     MenuRow {
+                        label: "Process tree"
+                        value: root.activity && root.activity.configReady ? (root.procTree ? "On" : "Off") : "Loading…"
+                        enabled: root.activity && !root.activity.configBusy
+                        navigationIndex: root.treeIndex
+                        onClicked: root.cycleSetting(root.treeIndex, 1)
+                    }
+
+                    MenuRow {
                         label: "Process sorting"
                         value: root.activity && root.activity.configReady ? root.sortingLabel(root.procSorting) : "Loading…"
                         enabled: root.activity && !root.activity.configBusy
-                        hasCursor: root.settingsIndex === root.sortingIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.sortingIndex;
-                        }
+                        navigationIndex: root.sortingIndex
                         onClicked: root.cycleSetting(root.sortingIndex, 1)
                     }
 
                     MenuRow {
-                        label: "Process tree"
-                        value: root.activity && root.activity.configReady ? (root.procTree ? "On" : "Off") : "Loading…"
+                        label: "Transparent background"
+                        value: root.activity && root.activity.configReady
+                            ? (root.transparentBackground ? "On" : "Off")
+                            : "Loading…"
                         enabled: root.activity && !root.activity.configBusy
-                        hasCursor: root.settingsIndex === root.treeIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.treeIndex;
-                        }
-                        onClicked: root.cycleSetting(root.treeIndex, 1)
+                        navigationIndex: root.backgroundIndex
+                        onClicked: root.cycleSetting(root.backgroundIndex, 1)
                     }
 
                     Text {
@@ -930,22 +898,23 @@ Panel {
                     }
 
                     Text {
+                        visible: root.updateEditing
                         width: parent.width
-                        text: root.updateEditing ? "h/l or Left/Right: 1 ms; k/j or Up/Down: presets" : "Changes apply to running btop sessions."
+                        text: "h/l or Left/Right: 1 ms; k/j or Up/Down: presets"
                         color: root.dim
                         font.family: root.fontFamily
                         font.pixelSize: Style.font.caption
                         wrapMode: Text.WordWrap
                     }
 
+                    PanelSeparator {
+                        foreground: root.foreground
+                    }
+
                     MenuRow {
                         label: "Back"
-                        iconText: "‹"
-                        hasCursor: root.settingsIndex === root.backIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.backIndex;
-                        }
+                        iconText: "󰅁"
+                        navigationIndex: root.backIndex
                         onClicked: root.showMain()
                     }
                 }
@@ -961,14 +930,16 @@ Panel {
         property string iconText: ""
         property bool selectedIcon: false
         property bool enabled: true
+        required property int navigationIndex
 
         signal clicked
-        signal hovered(bool isHovered)
 
         width: parent ? parent.width : implicitWidth
         implicitHeight: Style.space(44)
         foreground: root.foreground
         opacity: enabled ? 1 : 0.55
+        hasCursor: (root.page === "main" ? root.mainIndex : root.settingsIndex)
+            === navigationIndex
 
         RowLayout {
             anchors.fill: parent
@@ -985,7 +956,7 @@ Panel {
                 Layout.alignment: Qt.AlignVCenter
             }
 
-            SelectedIcon {
+            BtopIcon {
                 visible: row.selectedIcon
                 iconSize: Style.font.icon
                 glyphSize: iconSize
@@ -1017,8 +988,12 @@ Panel {
             enabled: row.enabled
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onEntered: row.hovered(true)
-            onExited: row.hovered(false)
+            onEntered: {
+                if (root.page === "main")
+                    root.mainIndex = row.navigationIndex;
+                else
+                    root.settingsIndex = row.navigationIndex;
+            }
             onPressed: if (root.updateEditing)
                 root.finishUpdateEditing(true, true)
             onClicked: row.clicked()

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "ilyazar.btop",
   "name": "btop Activity",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": "ilyaZar",
   "license": "MIT",
   "description": "Brings btop back to the Omarchy bar with live CPU, RAM, GPU usage, VRAM, and temperatures. Change common btop settings live, choose floating or tiled windows, open built-in help, and use built-in or custom tray icons.",
@@ -22,6 +22,7 @@
       "iconStyle": "CPU",
       "customIconPath": "",
       "windowMode": "Floating",
+      "transparentBackground": false,
       "updateMs": 2000,
       "procSorting": "cpu lazy",
       "procTree": false

@@ -89,6 +89,42 @@ test('Intel rejects warmup-only and invalid samples, but accepts idle zero', () 
   assert.equal(gpu.usage, 0)
 })
 
+test('Fastfetch marks only one matching default renderer', () => {
+  const amd = device('0x1002', 'amdgpu', '0000:03:00.0')
+  amd.card = 'card0'
+  const intel = device()
+  const metadata = {}
+  model.fastfetch([
+    { type: 'GPU', result: [
+      { name: 'AMD Radeon RX 6400', type: 'Discrete', platformApi: 'DRM (card0)' },
+      { name: 'Intel HD Graphics 4600', type: 'Integrated',
+        platformApi: 'DRM (card1)', memory: { dedicated: { total: 0 } } }
+    ] },
+    { type: 'OpenGL', result: {
+      vendor: 'AMD', renderer: 'AMD Radeon RX 6400 (radeonsi, navi24)'
+    } }
+  ], [amd, intel], metadata)
+  assert.equal(amd.defaultRenderer, true)
+  assert.equal(intel.defaultRenderer, false)
+  assert.equal(model.emptyGpu(amd, metadata).defaultRenderer, true)
+})
+
+test('Fastfetch leaves an ambiguous renderer unresolved', () => {
+  const first = device('0x1002', 'amdgpu', '0000:03:00.0')
+  const second = device('0x1002', 'amdgpu', '0000:04:00.0')
+  first.card = 'card0'
+  second.card = 'card2'
+  model.fastfetch([
+    { type: 'GPU', result: [
+      { name: 'AMD Radeon', type: 'Discrete', platformApi: 'DRM (card0)' },
+      { name: 'AMD Radeon', type: 'Discrete', platformApi: 'DRM (card2)' }
+    ] },
+    { type: 'OpenGL', result: { vendor: 'AMD', renderer: 'AMD Radeon' } }
+  ], [first, second], {})
+  assert.equal(first.defaultRenderer, false)
+  assert.equal(second.defaultRenderer, false)
+})
+
 test('AMD kernel readings do not acquire a ROCm dependency', () => {
   const gpu = device('0x1002', 'amdgpu', '0000:03:00.0')
   gpu.memoryKind = 'dedicated'

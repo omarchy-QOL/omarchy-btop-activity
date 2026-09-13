@@ -42,14 +42,15 @@ See btop launch from the bar, switch between floating and tiled layouts, apply a
 
 The plugin keeps a short list of useful controls before opening btop:
 
-| Setting         | Choices                                  |
-| --------------- | ---------------------------------------- |
-| Tray icon       | Meters, CPU, Pulse, or a custom image    |
-| Keybindings     | opens the Omarchy user bindings file     |
-| Window mode     | floating or tiled                        |
-| Update interval | any whole number from 100 ms to one day  |
-| Process sorting | lazy CPU, direct CPU, memory, or program |
-| Process tree    | on or off                                |
+| Setting                | Choices                                  |
+| ---------------------- | ---------------------------------------- |
+| Tray icon              | Meters, CPU, Pulse, or a custom image    |
+| Keybindings            | opens the Omarchy user bindings file     |
+| Window mode            | floating or tiled                        |
+| Update interval        | any whole number from 100 ms to one day  |
+| Process tree           | on or off                                |
+| Process sorting        | lazy CPU, direct CPU, memory, or program |
+| Transparent background | on or off                                |
 
 For the update interval, press Enter or click the value to edit it. Left/Right
 (or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
@@ -90,9 +91,11 @@ Depending on the installed icon themes, useful paths include:
 
 Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
 
-Under **Appearance**, choose whether btop opens tiled or floating. The setting
-applies to both left-click and Help. Floating is the default and restores
-Omarchy's centered 875 x 600 window size when selected.
+Under **Plugin**, choose whether btop opens tiled or floating or open its
+keybindings. The window mode applies to both left-click and Help. Floating is
+the default and restores Omarchy's centered 875 x 600 window size when
+selected. Under **btop**, live settings include whether btop paints its own
+background.
 
 ## Optional hardware setup
 
@@ -110,6 +113,10 @@ never installs packages or changes permissions itself. After setup, allow about
 ```bash
 omarchy restart shell
 ```
+
+With multiple GPUs, the popup shows usage for the default OpenGL renderer when
+Fastfetch can match it to exactly one device. The tooltip still lists every GPU;
+an ambiguous renderer leaves the popup showing the GPU count.
 
 Run the verification commands below as your normal desktop user, without `sudo`.
 A command that only works as root will not work inside the plugin. The tooltip
@@ -275,15 +282,23 @@ backend's installation, permissions, or live readings on suitable hardware.
 
 ## Config safety and troubleshooting
 
-The plugin stores its choices in Omarchy's `shell.json` and generates a private
-btop config under `$XDG_RUNTIME_DIR`. The normal user `btop.conf` is never read
-or written.
+The plugin stores its choices in Omarchy's `shell.json` and generates its
+private btop config at
+`$XDG_RUNTIME_DIR/omarchy-btop-activity/btop.conf`. It verifies that the
+runtime directory is available, user-owned, and writable before creating its
+own private directory. The normal user `btop.conf` is never read or written.
 
 The runtime file is created from Omarchy's packaged btop config. Quickshell
 writes it atomically, and a running btop receives its supported config-reload
-signal only after a successful change. Disabling or removing the plugin restores
-a file that existed before the plugin was enabled, or removes the file it
-created.
+signal only after a successful change. If the file already exists, the plugin
+reuses it and updates the btop settings stored in `shell.json`. Otherwise, it
+creates the file when needed.
+
+Omarchy plugins have no uninstall hook. Removing the plugin can leave this
+temporary directory until the user runtime is cleared. That often happens at
+the final logout and always happens on reboot; user lingering can delay it. The
+leftover is harmless: normal btop never reads it, and reinstalling the plugin
+reuses it. No marker or backup files are created.
 
 GPU temperature and VRAM depend on driver support. If unavailable, the hover
 says `--` or `-- (vRAM)`. See the hardware-specific
@@ -296,8 +311,9 @@ and verification commands.
 omarchy plugin remove ilyazar.btop
 ```
 
-Removing the plugin removes its private btop settings. It does not remove btop
-or change btop's normal configuration.
+Removing the plugin stops using its private btop settings. It does not remove
+btop or change btop's normal configuration. The temporary generated file may
+remain until the user runtime is cleared.
 
 ## Roadmap and releases
 
@@ -306,6 +322,10 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.3   | 2026-09-13 | isolate and reuse a private runtime config        |
+|         |            | compact settings and improve their navigation     |
+|         |            | apply transparent backgrounds live                |
+|         |            | show the identified default render GPU            |
 | 0.2.2   | 2026-09-05 | native GPU telemetry without compiled helpers     |
 |         |            | keep CPU and RAM sampling responsive              |
 |         |            | show each GPU and distinguish VRAM/shared RAM     |
