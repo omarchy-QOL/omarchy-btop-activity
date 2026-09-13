@@ -33,6 +33,7 @@ Panel {
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
     readonly property string customIconPath: String(setting("customIconPath", ""))
     readonly property string customIconUrl: resolveIconPath(customIconPath)
+    readonly property string helpScript: localPath(Qt.resolvedUrl("helpers/open-btop-help.sh"))
     readonly property string keybindingsScript: localPath(Qt.resolvedUrl("helpers/open-keybindings.sh"))
     readonly property string windowMode: String(setting("windowMode", "Floating"))
     readonly property bool transparentBackground: setting("transparentBackground", false) === true
@@ -141,10 +142,6 @@ Panel {
         });
     }
 
-    function shellQuote(value) {
-        return "'" + String(value).replace(/'/g, "'\\''") + "'";
-    }
-
     function localPath(url) {
         var value = String(url || "");
         if (value.indexOf("file://") === 0)
@@ -190,7 +187,9 @@ Panel {
     function execBtopHelp() {
         if (!activity)
             return;
-        Quickshell.execDetached(["bash", "-lc", "omarchy-launch-or-focus-tui --app-id=" + btopAppId + " btop --config " + shellQuote(activity.configPath) + " " + ">/dev/null 2>&1 & " + "for _ in {1..30}; do " + "if hyprctl clients -j | jq -e " + "'.[] | select(.class == \"" + btopAppId + "\")' " + ">/dev/null; then " + "sleep 0.6; " + "hyprctl dispatch " + "'hl.dsp.send_key_state({ mods = \"SHIFT\", key = \"slash\", " + "state = \"down\", window = \"class:" + btopAppId + "\" })' " + ">/dev/null; sleep 0.05; hyprctl dispatch " + "'hl.dsp.send_key_state({ mods = \"SHIFT\", key = \"slash\", " + "state = \"up\", window = \"class:" + btopAppId + "\" })' " + ">/dev/null; " + "exit; fi; sleep 0.1; done"]);
+        Quickshell.execDetached([
+            "bash", helpScript, btopAppId, activity.configPath
+        ]);
     }
 
     function launchBtop() {
@@ -301,6 +300,11 @@ Panel {
         if (!activity.setConfig(updateMs, procSorting, procTree,
                                 transparentBackground))
             configSynced = false;
+    }
+
+    function requestConfigSync() {
+        configSynced = false;
+        syncBtopConfig();
     }
 
     function applyWindowMode(mode) {
@@ -423,25 +427,12 @@ Panel {
     onUpdateMsChanged: {
         if (!updateEditing)
             updateDraft = String(updateMs);
-        configSynced = false;
-        syncBtopConfig();
+        requestConfigSync();
     }
-    onProcSortingChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
-    onProcTreeChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
-    onTransparentBackgroundChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
-    onActivityChanged: {
-        configSynced = false;
-        syncBtopConfig();
-    }
+    onProcSortingChanged: requestConfigSync()
+    onProcTreeChanged: requestConfigSync()
+    onTransparentBackgroundChanged: requestConfigSync()
+    onActivityChanged: requestConfigSync()
 
     Connections {
         target: root.activity
@@ -616,11 +607,7 @@ Panel {
                     MenuRow {
                         label: "Start btop"
                         selectedIcon: true
-                        hasCursor: root.mainIndex === 0
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 0;
-                        }
+                        navigationIndex: 0
                         onClicked: root.launchBtop()
                     }
 
@@ -628,11 +615,7 @@ Panel {
                         label: "Settings"
                         iconText: ""
                         value: "›"
-                        hasCursor: root.mainIndex === 1
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 1;
-                        }
+                        navigationIndex: 1
                         onClicked: root.showSettings()
                     }
 
@@ -643,11 +626,7 @@ Panel {
                     MenuRow {
                         label: "Help"
                         iconText: "?"
-                        hasCursor: root.mainIndex === 2
-                        onHovered: function (on) {
-                            if (on)
-                                root.mainIndex = 2;
-                        }
+                        navigationIndex: 2
                         onClicked: root.launchBtopHelp()
                     }
                 }
@@ -666,11 +645,7 @@ Panel {
                     MenuRow {
                         label: "Tray icon"
                         value: root.iconStyle
-                        hasCursor: root.settingsIndex === 0
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = 0;
-                        }
+                        navigationIndex: 0
                         onClicked: root.cycleSetting(0, 1)
                     }
 
@@ -728,22 +703,14 @@ Panel {
                     MenuRow {
                         label: "Keybindings"
                         value: activityBinding.label
-                        hasCursor: root.settingsIndex === root.keybindingsIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.keybindingsIndex;
-                        }
+                        navigationIndex: root.keybindingsIndex
                         onClicked: root.launchKeybindings()
                     }
 
                     MenuRow {
                         label: "Hyprland window mode"
                         value: root.windowMode
-                        hasCursor: root.settingsIndex === root.windowModeIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.windowModeIndex;
-                        }
+                        navigationIndex: root.windowModeIndex
                         onClicked: root.cycleSetting(root.windowModeIndex, 1)
                     }
 
@@ -897,11 +864,7 @@ Panel {
                         label: "Process tree"
                         value: root.activity && root.activity.configReady ? (root.procTree ? "On" : "Off") : "Loading…"
                         enabled: root.activity && !root.activity.configBusy
-                        hasCursor: root.settingsIndex === root.treeIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.treeIndex;
-                        }
+                        navigationIndex: root.treeIndex
                         onClicked: root.cycleSetting(root.treeIndex, 1)
                     }
 
@@ -909,11 +872,7 @@ Panel {
                         label: "Process sorting"
                         value: root.activity && root.activity.configReady ? root.sortingLabel(root.procSorting) : "Loading…"
                         enabled: root.activity && !root.activity.configBusy
-                        hasCursor: root.settingsIndex === root.sortingIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.sortingIndex;
-                        }
+                        navigationIndex: root.sortingIndex
                         onClicked: root.cycleSetting(root.sortingIndex, 1)
                     }
 
@@ -923,11 +882,7 @@ Panel {
                             ? (root.transparentBackground ? "On" : "Off")
                             : "Loading…"
                         enabled: root.activity && !root.activity.configBusy
-                        hasCursor: root.settingsIndex === root.backgroundIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.backgroundIndex;
-                        }
+                        navigationIndex: root.backgroundIndex
                         onClicked: root.cycleSetting(root.backgroundIndex, 1)
                     }
 
@@ -958,11 +913,7 @@ Panel {
                     MenuRow {
                         label: "Back"
                         iconText: "󰅁"
-                        hasCursor: root.settingsIndex === root.backIndex
-                        onHovered: function (on) {
-                            if (on)
-                                root.settingsIndex = root.backIndex;
-                        }
+                        navigationIndex: root.backIndex
                         onClicked: root.showMain()
                     }
                 }
@@ -978,14 +929,16 @@ Panel {
         property string iconText: ""
         property bool selectedIcon: false
         property bool enabled: true
+        required property int navigationIndex
 
         signal clicked
-        signal hovered(bool isHovered)
 
         width: parent ? parent.width : implicitWidth
         implicitHeight: Style.space(44)
         foreground: root.foreground
         opacity: enabled ? 1 : 0.55
+        hasCursor: (root.page === "main" ? root.mainIndex : root.settingsIndex)
+            === navigationIndex
 
         RowLayout {
             anchors.fill: parent
@@ -1034,8 +987,12 @@ Panel {
             enabled: row.enabled
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
-            onEntered: row.hovered(true)
-            onExited: row.hovered(false)
+            onEntered: {
+                if (root.page === "main")
+                    root.mainIndex = row.navigationIndex;
+                else
+                    root.settingsIndex = row.navigationIndex;
+            }
             onPressed: if (root.updateEditing)
                 root.finishUpdateEditing(true, true)
             onClicked: row.clicked()
