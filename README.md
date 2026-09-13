@@ -45,12 +45,12 @@ The plugin keeps a short list of useful controls before opening btop:
 | Setting                | Choices                                  |
 | ---------------------- | ---------------------------------------- |
 | Tray icon              | Meters, CPU, Pulse, or a custom image    |
-| Window mode            | floating or tiled                        |
-| Transparent background | on or off                                |
-| Update interval        | any whole number from 100 ms to one day  |
-| Process sorting        | lazy CPU, direct CPU, memory, or program |
-| Process tree           | on or off                                |
 | Keybindings            | opens the Omarchy user bindings file     |
+| Window mode            | floating or tiled                        |
+| Update interval        | any whole number from 100 ms to one day  |
+| Process tree           | on or off                                |
+| Process sorting        | lazy CPU, direct CPU, memory, or program |
+| Transparent background | on or off                                |
 
 For the update interval, press Enter or click the value to edit it. Left/Right
 (or `h`/`l`) change it by 1 ms. Up/Down (or `k`/`j`) move through 250, 500,
@@ -91,10 +91,11 @@ Depending on the installed icon themes, useful paths include:
 
 Plugin choices are stored in Omarchy's `shell.json` and survive shell restarts.
 
-Under **btop appearance**, choose whether btop opens tiled or floating and
-whether it paints its own background. The window mode applies to both
-left-click and Help. Floating is the default and restores Omarchy's centered
-875 x 600 window size when selected.
+Under **Plugin**, choose whether btop opens tiled or floating or open its
+keybindings. The window mode applies to both left-click and Help. Floating is
+the default and restores Omarchy's centered 875 x 600 window size when
+selected. Under **btop**, live settings include whether btop paints its own
+background.
 
 ## Optional hardware setup
 
@@ -112,6 +113,10 @@ never installs packages or changes permissions itself. After setup, allow about
 ```bash
 omarchy restart shell
 ```
+
+With multiple GPUs, the popup shows usage for the default OpenGL renderer when
+Fastfetch can match it to exactly one device. The tooltip still lists every GPU;
+an ambiguous renderer leaves the popup showing the GPU count.
 
 Run the verification commands below as your normal desktop user, without `sudo`.
 A command that only works as root will not work inside the plugin. The tooltip
