@@ -44,10 +44,14 @@ Panel {
     readonly property string btopAppId: windowMode === "Tiled" ? "org.omarchy.btop_tiled" : "org.omarchy.btop"
     readonly property bool customIconInvalid: iconStyle === "Custom" && (customIconUrl === "" || customIconLoadFailed)
     readonly property var gpus: activity ? activity.gpus : []
-    readonly property string gpuSummary: gpus.length === 1
-        ? "GPU " + (gpus[0].status === "sleeping" ? "asleep"
-            : percentage(gpus[0].usage))
-        : gpus.length + " GPUs"
+    readonly property var defaultRendererGpu: gpus.find(function (gpu) {
+        return gpu.defaultRenderer === true;
+    })
+    readonly property string gpuSummary: {
+        var gpu = gpus.length === 1 ? gpus[0] : defaultRendererGpu;
+        return gpu ? "GPU " + (gpu.status === "sleeping" ? "asleep"
+            : percentage(gpu.usage)) : gpus.length + " GPUs";
+    }
     readonly property string cpuTemperatureSuffix: " • "
         + temperature(activity ? activity.cpuTemperature : null)
     readonly property string tooltipMetrics: [

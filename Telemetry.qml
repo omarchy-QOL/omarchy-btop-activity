@@ -285,7 +285,8 @@ QtObject {
     onStarted: {
       if (root._job.kind === "fastfetch") {
         write(JSON.stringify({ modules: [
-          { type: "gpu", temp: true, driverSpecific: true }
+          { type: "gpu", temp: true, driverSpecific: true },
+          { type: "OpenGL" }
         ] }) + "\n")
         stdinEnabled = false
       }

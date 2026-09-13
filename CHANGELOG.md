@@ -10,6 +10,7 @@ Notable changes to btop Activity are documented here.
   uninstall cleanup.
 - Clarify and compact the plugin settings sections.
 - Add a live transparent-background setting for plugin-launched btop sessions.
+- Show default render GPU usage in the popup when Fastfetch identifies it.
 
 ## 0.2.2 - 2026-09-05
 
