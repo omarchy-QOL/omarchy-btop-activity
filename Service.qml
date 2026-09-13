@@ -285,7 +285,6 @@ QtObject {
     running: false
     command: ["btop", "--default-config"]
     stdout: StdioCollector {
-      id: defaultConfigStdout
       waitForEnd: true
       onStreamFinished: root._defaultConfigOutput = text
     }

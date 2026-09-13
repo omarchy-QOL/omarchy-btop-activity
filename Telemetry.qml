@@ -16,6 +16,7 @@ QtObject {
   property var gpus: []
   readonly property bool available: cpuUsage >= 0 && memoryUsage >= 0
   readonly property int gpuInterval: Math.max(1000, updateMs)
+  readonly property int gpuStaleMs: Math.max(5000, gpuInterval * 2)
   readonly property string directory: decodeURIComponent(
     Qt.resolvedUrl(".").toString().replace(/^file:\/\//, "").replace(/\/$/, ""))
   readonly property string sampler: directory + "/helpers/sample-telemetry.awk"
@@ -58,9 +59,9 @@ QtObject {
     _lastSample = now
     if (!statsProcess.running) statsProcess.running = true
     if (_rediscover) discover()
-    gpus = Model.publish(gpus, [], now, Math.max(5000, gpuInterval * 2))
+    gpus = Model.publish(gpus, [], now, gpuStaleMs)
     if (_lastGpuResult &&
-        Date.now() - _lastGpuResult > Math.max(5000, gpuInterval * 2)) {
+        Date.now() - _lastGpuResult > gpuStaleMs) {
       gpus = _inventory.gpus.map(function(g) {
         return Model.emptyGpu(g, root._state.metadata)
       })
@@ -90,8 +91,7 @@ QtObject {
     _job = Model.nextJob(_snapshot.gpus, _inventory.tools,
       _state, directory, Date.now())
     if (_job === null) {
-      gpus = Model.publish(_snapshot.gpus, gpus,
-        Date.now(), Math.max(5000, gpuInterval * 2))
+      gpus = Model.publish(_snapshot.gpus, gpus, Date.now(), gpuStaleMs)
       _snapshot = null
       if (_rediscover) Qt.callLater(discover)
       return
@@ -130,8 +130,7 @@ QtObject {
         root._snapshot.gpus[index] = gpu
       })
       _rediscover = true
-      gpus = Model.publish(_snapshot.gpus, gpus,
-        Date.now(), Math.max(5000, gpuInterval * 2))
+      gpus = Model.publish(_snapshot.gpus, gpus, Date.now(), gpuStaleMs)
       Qt.callLater(sampleBackend)
       return
     }
@@ -178,8 +177,7 @@ QtObject {
       if (failed || !changed)
         root._state.retryAfter[kind + ":" + id] = Date.now() + 30000
     })
-    gpus = Model.publish(_snapshot.gpus, gpus,
-      Date.now(), Math.max(5000, gpuInterval * 2))
+    gpus = Model.publish(_snapshot.gpus, gpus, Date.now(), gpuStaleMs)
     if (failed) _rediscover = true
     Qt.callLater(sampleBackend)
   }
@@ -249,8 +247,8 @@ QtObject {
           var old = previousSnapshot.gpus.find(function(g) { return g.id === gpu.id })
           if (old) gpu.failed = old.failed
         })
-        nextSnapshot.gpus = Model.publish(nextSnapshot.gpus,
-          previousSnapshot.gpus, Date.now(), Math.max(5000, root.gpuInterval * 2))
+        nextSnapshot.gpus = Model.publish(
+          nextSnapshot.gpus, previousSnapshot.gpus, Date.now(), root.gpuStaleMs)
       } else root._state.attempted = {}
       // Rediscover paths when a previously readable kernel field disappears.
       root.gpus.forEach(function(old) {
@@ -269,8 +267,8 @@ QtObject {
         })
       })
       if (code !== 0) root._rediscover = true
-      root.gpus = Model.publish(nextSnapshot.gpus, root.gpus,
-        Date.now(), Math.max(5000, root.gpuInterval * 2))
+      root.gpus = Model.publish(
+        nextSnapshot.gpus, root.gpus, Date.now(), root.gpuStaleMs)
       root.cpuTemperature = nextSnapshot.temperature
       root.cpuTemperatureKind = nextSnapshot.temperatureKind
       root._lastGpuResult = Date.now()
