@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import qs.Commons
 import qs.Ui
+import "components" as Components
 import "lib/shortcuts" as Shortcuts
 import "lib/UpdateInterval.js" as UpdateInterval
 import "lib/BtopHumanizer.js" as BtopHumanizer
@@ -459,7 +460,7 @@ Panel {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
 
-    component BtopIcon: SelectedIcon {
+    component BtopIcon: Components.SelectedIcon {
         iconSize: Style.space(14)
         glyphSize: Style.font.icon
 
@@ -493,7 +494,7 @@ Panel {
         }
     }
 
-    ActivityTooltip {
+    Components.ActivityTooltip {
         id: hoverTooltip
         anchorItem: button
         bar: root.bar
