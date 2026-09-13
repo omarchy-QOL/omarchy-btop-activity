@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -29,7 +31,6 @@ Panel {
     readonly property color urgent: bar ? bar.urgent : Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
-    readonly property string iconGlyph: iconStyle === "CPU" ? "󰍛" : ""
     readonly property string customIconPath: String(setting("customIconPath", ""))
     readonly property string customIconUrl: resolveIconPath(customIconPath)
     readonly property string keybindingsScript: localPath(Qt.resolvedUrl("helpers/open-keybindings.sh"))
@@ -467,59 +468,20 @@ Panel {
     implicitWidth: button.implicitWidth
     implicitHeight: button.implicitHeight
 
-    component SelectedIcon: Item {
-        id: selectedIcon
-        property real iconSize: Style.space(14)
-        property real glyphSize: Style.font.icon
-        implicitWidth: iconSize
-        implicitHeight: iconSize
+    component BtopIcon: SelectedIcon {
+        iconSize: Style.space(14)
+        glyphSize: Style.font.icon
 
-        ActivityIcon {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "Meters"
-            iconSize: selectedIcon.iconSize
-            cpuUsage: root.activity ? root.activity.cpuUsage : 0
-            memoryUsage: root.activity ? root.activity.memoryUsage : 0
-            color: root.foreground
-            opacity: root.activity && root.activity.available ? 1 : 0.4
-        }
-
-        Image {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "Custom" && root.customIconUrl !== ""
-            width: selectedIcon.iconSize
-            height: width
-            source: root.customIconUrl
-            sourceSize.width: 32
-            sourceSize.height: 32
-            fillMode: Image.PreserveAspectFit
-            smooth: true
-            onSourceChanged: root.customIconLoadFailed = false
-            onStatusChanged: {
-                if (status === Image.Error)
-                    root.customIconLoadFailed = true;
-                else if (status === Image.Ready)
-                    root.customIconLoadFailed = false;
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
-            text: root.iconGlyph
-            color: root.foreground
-            font.family: root.fontFamily
-            font.pixelSize: selectedIcon.glyphSize
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: root.customIconInvalid
-            text: "!"
-            color: root.foreground
-            font.family: root.fontFamily
-            font.pixelSize: selectedIcon.glyphSize
-            font.bold: true
+        iconStyle: root.iconStyle
+        customIconUrl: root.customIconUrl
+        customIconInvalid: root.customIconInvalid
+        cpuUsage: root.activity ? root.activity.cpuUsage : 0
+        memoryUsage: root.activity ? root.activity.memoryUsage : 0
+        activityAvailable: root.activity && root.activity.available
+        foreground: root.foreground
+        fontFamily: root.fontFamily
+        onIconLoadFailed: function (failed) {
+            root.customIconLoadFailed = failed;
         }
     }
 
@@ -529,7 +491,7 @@ Panel {
         bar: root.bar
         active: root.opened
         iconComponent: Component {
-            SelectedIcon {}
+            BtopIcon {}
         }
         onPressed: function (buttonCode) {
             hoverTooltip.dismiss();
@@ -602,7 +564,7 @@ Panel {
                     width: parent.width
                     spacing: Style.space(14)
 
-                    SelectedIcon {
+                    BtopIcon {
                         iconSize: Style.space(32)
                         glyphSize: iconSize
                         Layout.alignment: Qt.AlignVCenter
@@ -1040,7 +1002,7 @@ Panel {
                 Layout.alignment: Qt.AlignVCenter
             }
 
-            SelectedIcon {
+            BtopIcon {
                 visible: row.selectedIcon
                 iconSize: Style.font.icon
                 glyphSize: iconSize

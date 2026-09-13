@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 
 Item {
@@ -33,6 +35,8 @@ Item {
   }
 
   component Meter: Item {
+    id: meter
+
     required property real value
 
     width: root.iconSize * 0.18
@@ -49,7 +53,7 @@ Item {
       anchors.left: parent.left
       anchors.right: parent.right
       anchors.bottom: parent.bottom
-      height: Math.max(parent.width, parent.height * value / 100)
+      height: Math.max(parent.width, parent.height * meter.value / 100)
       radius: width / 2
       color: root.color
 
