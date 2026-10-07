@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import "." as Btop
+import ".." as Btop
 
 QtObject {
   id: root
