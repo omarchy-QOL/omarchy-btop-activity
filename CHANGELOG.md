@@ -2,7 +2,7 @@
 
 Notable changes to btop Activity are documented here.
 
-## 0.2.5 - 2026-10-03
+## 0.2.5 - 2026-10-06
 
 - Read defaults from a shipped `settings.toml`: `poll_intervals` sets the
   interval ladder the Update interval arrows step through, and `left_click`
@@ -11,14 +11,17 @@ Notable changes to btop Activity are documented here.
   is open and launches btop otherwise. It backs `left_click = "toggle"` and can
   be bound directly, so one key both opens and closes btop (@gw7523).
 - Move the shipped defaults to `settings.example.toml`; More plugin settings
-  opens an optional user-owned `settings.toml` outside the checkout. Valid
-  saves apply immediately; invalid edits keep the last working settings.
+  opens an optional user-owned `settings.toml` outside the checkout. Valid saves
+  apply immediately; invalid edits keep the last working settings.
 - Reduce idle CPU use by sampling only on hover or while the menu is open,
   without making the icon flicker when sampling resumes.
 - Make GPU readings follow the selected update interval alongside CPU and RAM.
 - Show theme-colored `[b]`, `[s]`, and `[?]` menu shortcut hints.
 - Use `l`/Right to enter Settings and `h`/Left on Back to return to the menu.
 - Keep the menu open when starting btop from it, so settings remain accessible.
+- Honor custom Omarchy `floating-window` size rules when launching btop and
+  preserve its last floating size when switching back from tiled mode
+  (@filip-spaldon, #52).
 
 ## 0.2.4 - 2026-09-20
 

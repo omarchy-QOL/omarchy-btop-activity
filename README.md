@@ -10,9 +10,9 @@ logical CPU.
 ## Demo
 
 See btop launch from the bar, switch between floating and tiled layouts, apply a
-250 ms refresh interval live, and update its keybinding.
+250 ms refresh interval live, and open or close with a configurable shortcut.
 
-<https://github.com/user-attachments/assets/d8dde155-dd62-4afa-b586-2f4b95a61d4e>
+<https://github.com/user-attachments/assets/5bb7eee8-c020-4e94-bcee-53794f928003>
 
 ### Features
 
@@ -189,6 +189,14 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.5   | 2026-10-06 | open or close btop with one click or shortcut     |
+|         |            | live user settings preserved across updates       |
+|         |            | customize click behavior and interval presets     |
+|         |            | pause telemetry when idle to reduce CPU use       |
+|         |            | refresh GPU readings at the selected interval     |
+|         |            | clearer shortcuts and keyboard menu navigation    |
+|         |            | keep settings accessible after launching btop     |
+|         |            | honor custom floating sizes and restore them      |
 | 0.2.4   | 2026-09-20 | avoid GNU find crashes during GPU sampling        |
 |         |            | keep scanner failures visible and tested          |
 | 0.2.3   | 2026-09-13 | isolate and reuse a private runtime config        |
