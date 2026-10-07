@@ -7,7 +7,9 @@ config=$2
 app_id=org.omarchy.btop-activity
 
 case $mode in
-  Floating) rules='float = true, center = true, size = { 875, 600 }' ;;
+  # Omarchy's floating-window tag carries float, center and size, so the
+  # user's own rules for that tag apply here too.
+  Floating) rules="tag = '+floating-window'" ;;
   Tiled) rules='tile = true' ;;
   *) exit 2 ;;
 esac

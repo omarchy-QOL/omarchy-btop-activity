@@ -88,7 +88,7 @@ for mode in Floating Tiled; do
   [[ $(wc -l <"$LOG") -eq 1 ]]
   grep -Fq "class = '^org[.]omarchy[.]btop-activity$'" "$RULE_LOG"
   if [[ $mode == Floating ]]; then
-    grep -Fq 'float = true, center = true, size = { 875, 600 }' "$RULE_LOG"
+    grep -Fq "tag = '+floating-window'" "$RULE_LOG"
   else
     grep -Fq 'tile = true' "$RULE_LOG"
   fi

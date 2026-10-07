@@ -364,11 +364,14 @@ Panel {
     }
 
     function applyWindowMode(mode) {
-        var action = mode === "Tiled" ? "tile" : "float";
+        var floating = mode !== "Tiled";
         var window = "class:^org[.]omarchy[.]btop-activity$";
-        var command = "hl.dispatch(hl.dsp.window.float({ action = \"" + action + "\", window = \"" + window + "\" }))";
-        if (mode === "Floating") {
-            command += "; hl.dispatch(hl.dsp.window.resize({ x = 875, y = 600, " + "relative = false, window = \"" + window + "\" }))" + "; hl.dispatch(hl.dsp.window.center({ window = \"" + window + "\" }))";
+        // Tag rules only apply when a window opens, so float it here too; Hyprland
+        // restores the size the window last had while floating.
+        var command = "hl.dispatch(hl.dsp.window.tag({ tag = \"" + (floating ? "+" : "-") + "floating-window\", window = \"" + window + "\" }))"
+            + "; hl.dispatch(hl.dsp.window.float({ action = \"" + (floating ? "float" : "tile") + "\", window = \"" + window + "\" }))";
+        if (floating) {
+            command += "; hl.dispatch(hl.dsp.window.center({ window = \"" + window + "\" }))";
         }
         Quickshell.execDetached(["hyprctl", "eval", command]);
     }
