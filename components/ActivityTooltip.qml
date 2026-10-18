@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.Commons
+import qs.Commons as Commons
 
 PopupWindow {
   id: root
@@ -68,9 +69,9 @@ PopupWindow {
     fontFamily: root.fontFamily
     fontSize: Style.font.body
     uiScale: Style.spaceReal(1)
-    foreground: Color.tooltip.text
-    color: Color.tooltip.background
-    border.color: Color.tooltip.border
+    foreground: Commons.Color.tooltip.text
+    color: Commons.Color.tooltip.background
+    border.color: Commons.Color.tooltip.border
     radius: Style.cornerRadius
   }
 }

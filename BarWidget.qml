@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import qs.Commons
+import qs.Commons as Commons
 import qs.Ui
 import "components" as Components
 import "lib/shortcuts" as Shortcuts
@@ -30,12 +31,12 @@ Panel {
     property var _telemetryService: null
     readonly property bool telemetryWanted: visible && (button.tooltipHovered || opened)
     readonly property string leftClick: pluginSettings.values.leftClick
-    property color shortcutColor: Color.foreground
+    property color shortcutColor: Commons.Color.foreground
 
     readonly property var activity: bar && bar.shell ? bar.shell.serviceFor(moduleName) : null
-    readonly property color foreground: bar ? bar.barForeground : Color.foreground
+    readonly property color foreground: bar ? bar.barForeground : Commons.Color.foreground
     readonly property color dim: Qt.darker(foreground, 1.5)
-    readonly property color urgent: bar ? bar.urgent : Color.urgent
+    readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
     readonly property string customIconPath: String(setting("customIconPath", ""))
@@ -92,7 +93,7 @@ Panel {
 
     FileView {
         id: themeColorsFile
-        path: Color.currentThemePath + "/colors.toml"
+        path: Commons.Color.currentThemePath + "/colors.toml"
         onLoaded: {
             var yellow = text().match(/^\s*(?:yellow|color3)\s*=\s*["']?(#[0-9A-Fa-f]{6})/m);
             if (yellow)
@@ -103,7 +104,7 @@ Panel {
     }
 
     Connections {
-        target: Color
+        target: Commons.Color
         function onShellValuesChanged() {
             themeColorsFile.reload();
         }
@@ -368,8 +369,7 @@ Panel {
         var window = "class:^org[.]omarchy[.]btop-activity$";
         // Tag rules only apply when a window opens, so float it here too; Hyprland
         // restores the size the window last had while floating.
-        var command = "hl.dispatch(hl.dsp.window.tag({ tag = \"" + (floating ? "+" : "-") + "floating-window\", window = \"" + window + "\" }))"
-            + "; hl.dispatch(hl.dsp.window.float({ action = \"" + (floating ? "float" : "tile") + "\", window = \"" + window + "\" }))";
+        var command = "hl.dispatch(hl.dsp.window.tag({ tag = \"" + (floating ? "+" : "-") + "floating-window\", window = \"" + window + "\" }))" + "; hl.dispatch(hl.dsp.window.float({ action = \"" + (floating ? "float" : "tile") + "\", window = \"" + window + "\" }))";
         if (floating) {
             command += "; hl.dispatch(hl.dsp.window.center({ window = \"" + window + "\" }))";
         }
@@ -933,7 +933,7 @@ Panel {
                                 text: root.updateDraft
                                 enabled: root.updateAvailable
                                 foreground: root.updateDraftInvalid ? root.urgent : root.foreground
-                                accent: root.updateDraftInvalid ? root.urgent : Color.accent
+                                accent: root.updateDraftInvalid ? root.urgent : Commons.Color.accent
                                 font.family: root.fontFamily
                                 horizontalAlignment: Qt.AlignHCenter
                                 inputMethodHints: Qt.ImhDigitsOnly
@@ -1086,7 +1086,6 @@ Panel {
         property string value: ""
         property string iconText: ""
         property bool selectedIcon: false
-        property bool enabled: true
         required property int navigationIndex
 
         signal clicked
