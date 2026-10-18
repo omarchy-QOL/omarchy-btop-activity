@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "id": "ilyazar.btop",
-  "name": "Btop system and activity monitor",
-  "version": "0.2.5",
+  "name": "System and activity monitor via btop",
+  "version": "0.2.6",
   "author": "ilyaZar",
   "license": "MIT",
   "description": "System / activity monitoring metrics and statistics via btop: live CPU, RAM, GPU usage, VRAM, and temperatures. Minimalist and lean: about 10MB RAM while idle. Lets you change common btop settings live, choose floating or tiled windows, open built-in help, and use built-in or custom tray icons.",

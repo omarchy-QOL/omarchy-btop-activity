@@ -189,6 +189,8 @@ Planned work stays at the top. Shipped entries come from
 
 | Release | Date       | What changed                                      |
 | ------- | ---------- | ------------------------------------------------- |
+| 0.2.6   | 2026-10-18 | keep shell palette colors working with Qt 6.12    |
+|         |            | clean up menu state and plugin naming             |
 | 0.2.5   | 2026-10-06 | open or close btop with one click or shortcut     |
 |         |            | live user settings preserved across updates       |
 |         |            | customize click behavior and interval presets     |
