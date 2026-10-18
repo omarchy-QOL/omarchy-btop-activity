@@ -104,7 +104,7 @@ Panel {
     }
 
     Connections {
-        target: Color
+        target: Commons.Color
         function onShellValuesChanged() {
             themeColorsFile.reload();
         }

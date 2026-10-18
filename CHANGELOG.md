@@ -4,8 +4,8 @@ Notable changes to btop Activity are documented here.
 
 ## 0.2.6 - 2026-10-18
 
-- Keep shell palette colors working with Qt 6.12 by qualifying
-  `Commons.Color` references (@rdoupe, #55).
+- Keep shell palette colors working with Qt 6.12 by qualifying `Commons.Color`
+  references (@rdoupe, #55).
 - Use the inherited menu-row enabled state and clarify the plugin name.
 
 ## 0.2.5 - 2026-10-06
