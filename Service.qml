@@ -32,43 +32,41 @@ QtObject {
   property string _defaultConfigError: ""
   property bool _creatingConfig: false
   property bool _usingDefaultConfigFallback: false
-  property bool runtimeReady: false
+  property bool stateReady: false
 
   readonly property bool configBusy: _pendingConfig !== null
     || _savingConfig
     || _creatingConfig
-    || !runtimeReady
-    || runtimeProcess.running
+    || !stateReady
+    || stateProcess.running
     || defaultConfigProcess.running
-  readonly property string runtimeRoot: Quickshell.env("XDG_RUNTIME_DIR")
-  readonly property string runtimeDir: runtimeRoot === "" ? ""
-    : runtimeRoot + "/omarchy-btop-activity"
-  readonly property string configPath: runtimeDir === "" ? ""
-    : runtimeDir + "/btop.conf"
+  readonly property string stateRoot: Quickshell.env("XDG_STATE_HOME")
+    || Quickshell.env("HOME") + "/.local/state"
+  readonly property string stateDir: stateRoot + "/omarchy-btop-activity"
+  readonly property string configPath: stateDir + "/btop.conf"
   readonly property string omarchyConfigPath:
     "/usr/share/omarchy/config/btop/btop.conf"
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
     "cpu lazy", "cpu direct"
   ]
-  readonly property string prepareRuntimeCommand: [
+  readonly property string prepareStateCommand: [
     "set -euo pipefail",
-    "runtime_root=\"$1\"",
-    "runtime_dir=\"$2\"",
+    "state_root=\"$1\"",
+    "state_dir=\"$2\"",
     "config_path=\"$3\"",
-    "[[ -n $runtime_root && $runtime_root == /* ]] || exit 20",
-    "[[ -d $runtime_root && -O $runtime_root",
-    "    && -w $runtime_root && -x $runtime_root ]] || exit 21",
-    "[[ $runtime_dir == \"$runtime_root/omarchy-btop-activity\" ]] || exit 22",
-    "[[ $config_path == \"$runtime_dir/btop.conf\" ]] || exit 22",
-    "if [[ -e $runtime_dir || -L $runtime_dir ]]; then",
-    "  [[ -d $runtime_dir && ! -L $runtime_dir && -O $runtime_dir",
-    "      && -w $runtime_dir && -x $runtime_dir ]] || exit 23",
+    "[[ $state_root == /* ]] || exit 20",
+    "[[ $state_dir == \"$state_root/omarchy-btop-activity\" ]] || exit 22",
+    "[[ $config_path == \"$state_dir/btop.conf\" ]] || exit 22",
+    "umask 077",
+    "mkdir -p -- \"$state_root\" || exit 21",
+    "if [[ -e $state_dir || -L $state_dir ]]; then",
+    "  [[ -d $state_dir && ! -L $state_dir && -O $state_dir",
+    "      && -w $state_dir && -x $state_dir ]] || exit 23",
     "else",
-    "  umask 077",
-    "  mkdir -m 0700 -- \"$runtime_dir\" || exit 24",
+    "  mkdir -m 0700 -- \"$state_dir\" || exit 24",
     "fi",
-    "chmod 0700 -- \"$runtime_dir\" || exit 24"
+    "chmod 0700 -- \"$state_dir\" || exit 24"
   ].join("\n")
 
   function setTelemetryDemand(owner, needed) {
@@ -257,22 +255,20 @@ QtObject {
     }
   }
 
-  property Process runtimeProcess: Process {
-    id: runtimeProcess
+  property Process stateProcess: Process {
+    id: stateProcess
     running: true
     command: [
-      "bash", "-c", root.prepareRuntimeCommand, "btop-runtime-prepare",
-      root.runtimeRoot, root.runtimeDir, root.configPath
+      "bash", "-c", root.prepareStateCommand, "btop-state-prepare",
+      root.stateRoot, root.stateDir, root.configPath
     ]
     onExited: function(exitCode) {
-      root.runtimeReady = exitCode === 0
-      if (!root.runtimeReady) {
+      root.stateReady = exitCode === 0
+      if (!root.stateReady) {
         root.configReady = false
         root.configError = exitCode === 20
-          ? "XDG_RUNTIME_DIR is not available"
-          : exitCode === 21
-            ? "XDG_RUNTIME_DIR is not owned and writable by this user"
-            : "Could not prepare the private btop runtime directory"
+          ? "XDG_STATE_HOME must be an absolute path"
+          : "Could not prepare the private btop state directory"
       }
     }
   }

@@ -13,7 +13,7 @@ set -euo pipefail
 
 [[ $# -eq 0 || $# -eq 2 ]] || exit 2
 mode="${1:-}"
-config="${2-${XDG_RUNTIME_DIR:+$XDG_RUNTIME_DIR/omarchy-btop-activity/btop.conf}}"
+config="${2-${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-btop-activity/btop.conf}"
 
 if [[ $# -eq 0 ]]; then
   mode=$(jq -r '.. | objects | select(.id? == "ilyazar.btop") | .windowMode // empty' \

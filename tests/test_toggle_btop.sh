@@ -8,7 +8,7 @@ MOCK_BIN="$TEMP_ROOT/bin"
 LOG="$TEMP_ROOT/calls.log"
 RULE_LOG="$TEMP_ROOT/rules.log"
 CLIENTS="$TEMP_ROOT/clients.json"
-RUNTIME_CONFIG="$TEMP_ROOT/runtime/omarchy-btop-activity/btop.conf"
+RUNTIME_CONFIG="$TEMP_ROOT/state/omarchy-btop-activity/btop.conf"
 
 mkdir -p "$MOCK_BIN" "$(dirname "$RUNTIME_CONFIG")" "$TEMP_ROOT/config/omarchy"
 : >"$RUNTIME_CONFIG"
@@ -48,7 +48,7 @@ run_helper() {
   : >"$LOG"
   : >"$RULE_LOG"
   env PATH="$MOCK_BIN:$PATH" HOME="$TEMP_ROOT" \
-    XDG_CONFIG_HOME="$TEMP_ROOT/config" XDG_RUNTIME_DIR="$TEMP_ROOT/runtime" \
+    XDG_CONFIG_HOME="$TEMP_ROOT/config" XDG_STATE_HOME="$TEMP_ROOT/state" \
     bash "$PLUGIN_ROOT/helpers/$helper" "$@"
 }
 
