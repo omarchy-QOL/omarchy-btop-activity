@@ -16,6 +16,7 @@ cd "$PLUGIN_ROOT"
 
 tests/test_gpu_fdinfo.sh
 tests/test_state_dir_preparation.sh
+tests/test_config_seed.sh
 node --test tests/test_telemetry.mjs
 "$QMLTESTRUNNER" -input "$TEST_DIR" -import "$PLUGIN_ROOT" \
   -platform offscreen -o -,txt

@@ -44,7 +44,10 @@ QtObject {
     || Quickshell.env("HOME") + "/.local/state"
   readonly property string stateDir: stateRoot + "/omarchy-btop-activity"
   readonly property string configPath: stateDir + "/btop.conf"
-  readonly property string omarchyConfigPath:
+  readonly property string userConfigPath:
+    (Quickshell.env("XDG_CONFIG_HOME")
+      || Quickshell.env("HOME") + "/.config") + "/btop/btop.conf"
+  property string omarchyConfigPath:
     "/usr/share/omarchy/config/btop/btop.conf"
   readonly property var sortingValues: [
     "pid", "program", "arguments", "threads", "user", "memory",
@@ -187,7 +190,18 @@ QtObject {
     _defaultConfigError = ""
     _creatingConfig = true
     _usingDefaultConfigFallback = false
-    omarchyConfigFile.reload()
+    userConfigFile.reload()
+  }
+
+  function seedConfig(text, tryNext) {
+    if (!_creatingConfig) return
+    if (String(text).trim() === "") {
+      tryNext()
+      return
+    }
+    _defaultConfigOutput = text
+    _creatingConfig = false
+    finishDefaultConfig()
   }
 
   function useDefaultConfig() {
@@ -202,6 +216,8 @@ QtObject {
       failConfig(_defaultConfigError || "btop returned an empty default config")
       return
     }
+    // A seed that opted out would stop btop keeping settings in this file.
+    text = patchConfig(text, "save_config_on_exit", "true")
     if (_pendingConfig !== null) {
       handleConfigLoaded(text, true)
       return
@@ -273,16 +289,19 @@ QtObject {
     }
   }
 
+  property FileView userConfigFile: FileView {
+    id: userConfigFile
+    path: root.userConfigPath
+    printErrors: false
+    onLoaded: root.seedConfig(text(), omarchyConfigFile.reload)
+    onLoadFailed: if (root._creatingConfig) omarchyConfigFile.reload()
+  }
+
   property FileView omarchyConfigFile: FileView {
     id: omarchyConfigFile
     path: root.omarchyConfigPath
     printErrors: false
-    onLoaded: {
-      if (!root._creatingConfig) return
-      root._defaultConfigOutput = text()
-      root._creatingConfig = false
-      root.finishDefaultConfig()
-    }
+    onLoaded: root.seedConfig(text(), root.useDefaultConfig)
     onLoadFailed: if (root._creatingConfig) root.useDefaultConfig()
   }
 
