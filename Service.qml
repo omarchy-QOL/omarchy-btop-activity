@@ -251,6 +251,9 @@ QtObject {
     atomicWrites: true
     blockWrites: true
     printErrors: false
+    // Notice a deleted config, so the next launch seeds it again.
+    watchChanges: true
+    onFileChanged: reload()
     onLoaded: root.handleConfigLoaded(text(), false)
     onLoadFailed: function(error) {
       if (error === FileViewError.FileNotFound) {

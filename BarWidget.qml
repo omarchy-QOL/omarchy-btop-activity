@@ -518,7 +518,10 @@ Panel {
             Qt.callLater(root.syncBtopConfig);
         }
         function onConfigExistsChanged() {
-            if (root.pendingLaunch !== "" && root.activity && root.activity.configExists)
+            // Seed a deleted config now, so the bare shortcut keeps working.
+            if (root.activity && !root.activity.configExists)
+                root.requestConfigSync();
+            else if (root.pendingLaunch !== "" && root.activity)
                 root.launchWhenConfigReady(root.pendingLaunch);
         }
     }

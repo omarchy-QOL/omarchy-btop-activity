@@ -29,7 +29,7 @@ reset_case() {
 
 run_service() {
   env PATH="$MOCK_BIN:$PATH" HOME="$TEMP_ROOT" \
-    XDG_CONFIG_HOME="$TEMP_ROOT/config" XDG_STATE_HOME="$TEMP_ROOT/state" \
+    SEED_DELETIONS="${SEED_DELETIONS:-0}" XDG_CONFIG_HOME="$TEMP_ROOT/config" XDG_STATE_HOME="$TEMP_ROOT/state" \
     SEED_OMARCHY_CONFIG="$PACKAGED_CONFIG" \
     QT_QPA_PLATFORM=offscreen QT_FORCE_STDERR_LOGGING=1 \
     timeout 8s quickshell --no-color -p "$SHELL_ROOT/shell.qml" \
@@ -88,5 +88,11 @@ has 'source = state'
 has 'disks_filter = "/data"'
 has 'save_config_on_exit = false'
 assert_managed_keys
+
+# A config deleted while the shell runs is seeded again, repeatedly.
+reset_case
+printf 'source = user\n' >"$USER_CONFIG"
+SEED_DELETIONS=2 run_service
+has 'source = user'
 
 printf 'ok - private btop config seeding\n'
