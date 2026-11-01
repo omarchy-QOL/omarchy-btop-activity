@@ -31,6 +31,13 @@ if [[ \$* == hl.dsp.window.close* && \${CLOSE_EXIT:-0} != 0 ]]; then
   exit "\$CLOSE_EXIT"
 fi
 MOCK
+cat >"$MOCK_BIN/pkill" <<MOCK
+#!/bin/bash
+printf '%s\n' "\$*" >"$TEMP_ROOT/pkill.log"
+if [[ \${QUIT_CLEANLY:-0} == 1 ]]; then
+  printf '[]' >"$CLIENTS"
+fi
+MOCK
 cat >"$MOCK_BIN/omarchy-launch-tui" <<MOCK
 #!/bin/bash
 printf 'launch %s\n' "\$*" >>"$LOG"
@@ -39,7 +46,7 @@ cat >"$MOCK_BIN/omarchy-notification-send" <<MOCK
 #!/bin/bash
 printf '%s\n' "\$*" >"$TEMP_ROOT/notice"
 MOCK
-chmod 0755 "$MOCK_BIN/hyprctl" "$MOCK_BIN/omarchy-launch-tui" \
+chmod 0755 "$MOCK_BIN/hyprctl" "$MOCK_BIN/pkill" "$MOCK_BIN/omarchy-launch-tui" \
   "$MOCK_BIN/omarchy-notification-send"
 
 run_helper() {
@@ -62,6 +69,13 @@ for mode in Floating Tiled; do
   grep -Fxq 'dispatch hl.dsp.window.close({ window = "address:0xabc" })' "$LOG"
   [[ ! -s $RULE_LOG ]]
 done
+
+# A clean quit saves btop's settings, so the window is not force-closed.
+QUIT_CLEANLY=1 run_helper toggle-btop.sh Floating "$RUNTIME_CONFIG"
+[[ ! -s $LOG ]]
+grep -Fxq -- "-INT -u $(id -u) -f -- ^btop --config ${RUNTIME_CONFIG//./\\.}\$" \
+  "$TEMP_ROOT/pkill.log"
+printf '[{"class":"org.omarchy.btop-activity","address":"0xabc"}]' >"$CLIENTS"
 
 # Open/focus and Help use that same private window, never the ordinary one.
 run_helper open-btop.sh Tiled "$RUNTIME_CONFIG"
