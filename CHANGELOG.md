@@ -2,6 +2,13 @@
 
 Notable changes to btop Activity are documented here.
 
+## Unreleased
+
+- Keep the private btop config in `XDG_STATE_HOME`, seeded once from the normal
+  `btop.conf`, so settings survive logout and reboot (#57). Thanks
+  @filip-spaldon for the report and the proposed fix.
+- Quit btop cleanly from the toggle, so closing it saves its settings.
+
 ## 0.2.6 - 2026-10-18
 
 - Keep shell palette colors working with Qt 6.12 by qualifying `Commons.Color`

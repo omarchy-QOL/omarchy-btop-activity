@@ -17,7 +17,7 @@ See btop launch from the bar, switch between floating and tiled layouts, apply a
 ### Features
 
 - applies settings live to the running btop application
-- preserves Omarchy's btop theme without touching the normal user `btop.conf`
+- keeps btop settings across reboots without touching the normal `btop.conf`
 
 ## Quickstart
 
@@ -149,22 +149,14 @@ available [on the website][hardware-guide].
 ## Config safety and troubleshooting
 
 The plugin stores popup choices in Omarchy's `shell.json` and advanced choices
-in the user-owned `settings.toml` described above. It generates its private btop
-config at `$XDG_RUNTIME_DIR/omarchy-btop-activity/btop.conf`. It verifies that
-the runtime directory is available, user-owned, and writable before creating its
-own private directory. The normal user `btop.conf` is never read or written.
+in the user-owned `settings.toml` described above. Its private btop config lives
+at `${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-btop-activity/btop.conf`. It
+is created once from the normal `btop.conf`, or Omarchy's packaged config if
+that is missing. The normal file is never written, and the two are independent
+afterwards.
 
-The runtime file is created from Omarchy's packaged btop config. Quickshell
-writes it atomically, and a running btop receives its supported config-reload
-signal only after a successful change. If the file already exists, the plugin
-reuses it and updates the btop settings stored in `shell.json`. Otherwise, it
-creates the file when needed.
-
-Omarchy plugins have no uninstall hook. Removing the plugin can leave this
-temporary directory until the user runtime is cleared. That often happens at the
-final logout and always happens on reboot; user lingering can delay it. The
-leftover is harmless: normal btop never reads it, and reinstalling the plugin
-reuses it. No marker or backup files are created.
+btop saves settings when it quits, including through the plugin's toggle.
+Closing its window another way loses unsaved changes.
 
 GPU temperature and VRAM depend on driver support. If unavailable, the hover
 says `--` or `-- (VRAM)`. See the hardware-specific
@@ -179,8 +171,8 @@ omarchy plugin remove ilyazar.btop
 
 Removing the plugin stops using its private btop settings. It does not remove
 btop or change btop's normal configuration. Your advanced settings file is
-preserved. The temporary generated btop config may remain until the user runtime
-is cleared.
+preserved. The private btop config also stays, so a reinstall keeps its
+settings.
 
 ## Roadmap and releases
 
