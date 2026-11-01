@@ -239,9 +239,12 @@ QtObject {
   function reloadBtop() {
     if (reloadProcess.running) return
     var user = Quickshell.env("USER")
+    // Ordinary btop has its own config and would lose unsaved edits.
+    var pattern = "^btop --config "
+      + configPath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"
     reloadProcess.command = user
-      ? ["pkill", "-USR2", "-u", user, "-x", "btop"]
-      : ["pkill", "-USR2", "-x", "btop"]
+      ? ["pkill", "-USR2", "-u", user, "-f", "--", pattern]
+      : ["pkill", "-USR2", "-f", "--", pattern]
     reloadProcess.running = true
   }
 

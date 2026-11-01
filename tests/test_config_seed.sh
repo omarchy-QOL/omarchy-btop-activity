@@ -17,7 +17,7 @@ cp "$PLUGIN_ROOT/tests/config-seed.qml" "$SHELL_ROOT/tests/Probe.qml"
 printf '%s\n' 'import "tests" as Tests' 'Tests.Probe {}' >"$SHELL_ROOT/shell.qml"
 
 # Never signal a real btop from the test.
-printf '#!/bin/bash\n' >"$MOCK_BIN/pkill"
+printf '#!/bin/bash\nprintf "%%s\\n" "$*" >"%s/pkill.log"\n' "$TEMP_ROOT" >"$MOCK_BIN/pkill"
 printf '#!/bin/bash\nprintf "source = default\\ncolor_theme = \\"Default\\"\\n"\n' \
   >"$MOCK_BIN/btop"
 chmod 0755 "$MOCK_BIN/pkill" "$MOCK_BIN/btop"
@@ -60,6 +60,7 @@ has 'disks_filter = "/home"'
 has 'save_config_on_exit = true'
 assert_managed_keys
 cmp "$USER_CONFIG" "$TEMP_ROOT/user.orig"
+grep -Fq -- "-f -- ^btop --config ${STATE_CONFIG//./\\.}\$" "$TEMP_ROOT/pkill.log"
 
 # Blank and missing user configs fall through to the packaged one.
 reset_case
