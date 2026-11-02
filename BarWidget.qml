@@ -38,6 +38,8 @@ Panel {
     readonly property color dim: Qt.darker(foreground, 1.5)
     readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+    readonly property int menuWidth: Style.space(304)
+    readonly property int menuRowHeight: Style.space(36)
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
     readonly property string customIconPath: String(setting("customIconPath", ""))
     readonly property string customIconUrl: resolveIconPath(customIconPath)
@@ -518,7 +520,10 @@ Panel {
             Qt.callLater(root.syncBtopConfig);
         }
         function onConfigExistsChanged() {
-            if (root.pendingLaunch !== "" && root.activity && root.activity.configExists)
+            // Seed a deleted config now, so the bare shortcut keeps working.
+            if (root.activity && !root.activity.configExists)
+                root.requestConfigSync();
+            else if (root.pendingLaunch !== "" && root.activity)
                 root.launchWhenConfigReady(root.pendingLaunch);
         }
     }
@@ -597,7 +602,7 @@ Panel {
         bar: root.bar
         open: root.opened
         focusTarget: keyCatcher
-        contentWidth: popup.fittedContentWidth(root.page === "createSettings" ? Math.max(Style.space(340), Math.ceil(creationMessage.implicitWidth) + popup.padding * 2 + Border.left(popup.borderSpec) + Border.right(popup.borderSpec)) : Style.space(340))
+        contentWidth: popup.fittedContentWidth(root.page === "createSettings" ? Math.max(Style.space(340), Math.ceil(creationMessage.implicitWidth) + popup.padding * 2 + Border.left(popup.borderSpec) + Border.right(popup.borderSpec)) : root.menuWidth)
         contentHeight: popup.fittedContentHeight(content.implicitHeight)
 
         PanelKeyCatcher {
@@ -675,7 +680,7 @@ Panel {
                         Text {
                             width: parent.width
                             visible: root.page !== "createSettings"
-                            text: (root.page === "main" ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null) + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null) + " · " + root.gpuSummary : "Changes apply to running btop sessions").toUpperCase()
+                            text: (root.page === "main" ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null) + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null) + " · " + root.gpuSummary : "Changes apply to running sessions").toUpperCase()
                             textFormat: Text.PlainText
                             color: root.dim
                             font.family: root.fontFamily
@@ -735,7 +740,7 @@ Panel {
                 Column {
                     visible: root.page === "main"
                     width: parent.width
-                    spacing: Style.space(6)
+                    spacing: Style.spacing.xs
 
                     MenuRow {
                         label: "start " + root.shortcutHint("b") + "top"
@@ -766,7 +771,7 @@ Panel {
                 Column {
                     visible: root.page === "settings"
                     width: parent.width
-                    spacing: Style.space(6)
+                    spacing: Style.spacing.xs
 
                     PanelSectionHeader {
                         text: "PLUGIN"
@@ -859,7 +864,7 @@ Panel {
                     CursorSurface {
                         id: updateRow
                         width: parent.width
-                        implicitHeight: Style.space(52)
+                        implicitHeight: root.menuRowHeight
                         foreground: root.foreground
                         opacity: root.updateAvailable ? 1 : 0.55
                         hasCursor: root.settingsIndex === root.updateIndex
@@ -890,6 +895,8 @@ Panel {
                             }
 
                             Column {
+                                id: updateArrows
+                                Layout.preferredHeight: Style.space(24)
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: 0
 
@@ -898,9 +905,9 @@ Panel {
                                     tooltipText: "Next preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.iconLarge
-                                    size: Style.space(24)
-                                    height: updateField.implicitHeight / 2
+                                    fontSize: Style.font.icon
+                                    size: Style.space(18)
+                                    height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
                                         if (on)
@@ -914,9 +921,9 @@ Panel {
                                     tooltipText: "Previous preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.iconLarge
-                                    size: Style.space(24)
-                                    height: updateField.implicitHeight / 2
+                                    fontSize: Style.font.icon
+                                    size: Style.space(18)
+                                    height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
                                         if (on)
@@ -928,8 +935,10 @@ Panel {
 
                             TextField {
                                 id: updateField
-                                Layout.preferredWidth: Style.space(94)
+                                Layout.preferredWidth: Style.space(82)
+                                Layout.preferredHeight: Style.spacing.controlHeight
                                 Layout.alignment: Qt.AlignVCenter
+                                verticalPadding: Style.spacing.sm
                                 text: root.updateDraft
                                 enabled: root.updateAvailable
                                 foreground: root.updateDraftInvalid ? root.urgent : root.foreground
@@ -995,6 +1004,8 @@ Panel {
                     MenuRow {
                         label: "Process tree"
                         value: root.activity && root.activity.configReady ? (root.procTree ? "On" : "Off") : "Loading…"
+                        valueColor: root.activity && root.activity.configReady && root.procTree
+                            ? Style.selectedStateColor(root.foreground, Commons.Color.accent) : root.dim
                         enabled: root.activity && !root.activity.configBusy
                         navigationIndex: root.treeIndex
                         onClicked: root.cycleSetting(root.treeIndex, 1)
@@ -1011,6 +1022,8 @@ Panel {
                     MenuRow {
                         label: "Transparent background"
                         value: root.activity && root.activity.configReady ? (root.transparentBackground ? "On" : "Off") : "Loading…"
+                        valueColor: root.activity && root.activity.configReady && root.transparentBackground
+                            ? Style.selectedStateColor(root.foreground, Commons.Color.accent) : root.dim
                         enabled: root.activity && !root.activity.configBusy
                         navigationIndex: root.backgroundIndex
                         onClicked: root.cycleSetting(root.backgroundIndex, 1)
@@ -1086,12 +1099,13 @@ Panel {
         property string value: ""
         property string iconText: ""
         property bool selectedIcon: false
+        property color valueColor: root.dim
         required property int navigationIndex
 
         signal clicked
 
         width: parent ? parent.width : implicitWidth
-        implicitHeight: Style.space(44)
+        implicitHeight: root.menuRowHeight
         foreground: root.foreground
         opacity: enabled ? 1 : 0.55
         hasCursor: (root.page === "main" ? root.mainIndex : root.settingsIndex) === navigationIndex
@@ -1132,7 +1146,7 @@ Panel {
             Text {
                 visible: row.value !== ""
                 text: row.value
-                color: root.dim
+                color: row.valueColor
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.bodySmall
                 Layout.alignment: Qt.AlignVCenter

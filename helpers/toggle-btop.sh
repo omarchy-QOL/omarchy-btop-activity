@@ -13,7 +13,7 @@ set -euo pipefail
 
 [[ $# -eq 0 || $# -eq 2 ]] || exit 2
 mode="${1:-}"
-config="${2-${XDG_RUNTIME_DIR:+$XDG_RUNTIME_DIR/omarchy-btop-activity/btop.conf}}"
+config="${2-${XDG_STATE_HOME:-$HOME/.local/state}/omarchy-btop-activity/btop.conf}"
 
 if [[ $# -eq 0 ]]; then
   mode=$(jq -r '.. | objects | select(.id? == "ilyazar.btop") | .windowMode // empty' \
@@ -26,6 +26,14 @@ case $mode in Floating | Tiled) ;; *) exit 2 ;; esac
 address=$(hyprctl clients -j | jq -r '
   first(.[] | select(.class == "org.omarchy.btop-activity") | .address) // empty')
 if [[ -n $address ]]; then
+  # btop saves settings only on a clean quit; closing the window kills it.
+  pattern=$(sed 's/[][\.*^$+?(){}|]/\\&/g' <<<"$config")
+  pkill -INT -u "$(id -u)" -f -- "^btop --config $pattern\$" || true
+  for _ in {1..10}; do
+    sleep 0.1
+    hyprctl clients -j | jq -e --arg address "$address" \
+      'any(.[]; .address == $address)' >/dev/null || exit 0
+  done
   exec hyprctl dispatch "hl.dsp.window.close({ window = \"address:$address\" })"
 fi
 

@@ -2,6 +2,17 @@
 
 Notable changes to btop Activity are documented here.
 
+## 0.2.7 - 2026-11-02
+
+- Keep the private btop config in `XDG_STATE_HOME`, seeded once from the normal
+  `btop.conf`, so settings survive logout and reboot (#57). Thanks
+  @filip-spaldon for the report and the proposed fix.
+- Quit btop cleanly from the toggle, so closing it saves its settings.
+- Compact the popup rows, width, spacing, and update controls, and make enabled
+  boolean values easier to distinguish.
+- Consolidate DRM `fdinfo` collection in Python, sample core telemetry in Bash,
+  and remove the plugin's runtime AWK dependency (#54).
+
 ## 0.2.6 - 2026-10-18
 
 - Keep shell palette colors working with Qt 6.12 by qualifying `Commons.Color`

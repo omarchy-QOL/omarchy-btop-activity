@@ -31,8 +31,8 @@ Item {
 
     function updateBindings(raw) {
         try {
-            var bindings = JSON.parse(raw || "[]");
-            var binding = ShortcutFormat.findBinding(bindings, root.actionDescription);
+            let bindings = JSON.parse(raw || "[]");
+            let binding = ShortcutFormat.findBinding(bindings, root.actionDescription);
             root.resolvedLabel = ShortcutFormat.bindingLabel(binding);
         } catch (error) {
             root.resolvedLabel = "";

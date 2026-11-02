@@ -14,12 +14,15 @@ readonly TEST_DIR PLUGIN_ROOT QMLTESTRUNNER
 
 cd "$PLUGIN_ROOT"
 
-tests/test_gpu_fdinfo.sh
-tests/test_runtime_config_preparation.sh
+python3 tests/test_gpu_fdinfo.py
+tests/test_sample_telemetry.sh
+tests/test_state_dir_preparation.sh
+tests/test_config_seed.sh
 node --test tests/test_telemetry.mjs
 "$QMLTESTRUNNER" -input "$TEST_DIR" -import "$PLUGIN_ROOT" \
   -platform offscreen -o -,txt
 tests/test_toggle_btop.sh
+tests/test_open_keybindings.sh
 tests/test_plugin_settings_editor.sh
 tests/test_plugin_settings_reload.sh
 tests/test_telemetry_cadence.sh
