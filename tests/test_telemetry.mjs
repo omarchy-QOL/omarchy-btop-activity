@@ -84,6 +84,55 @@ test('Intel reader selection requires the discovered backend', () => {
   assert.equal(model.nextJob([gpu], tools, state(), root, Date.now()).kind, 'intel')
 })
 
+test('fdinfo converts engine nanoseconds into client-scoped usage', () => {
+  const gpu = device()
+  const current = state()
+  const job = { kind: 'fdinfo', ids: [gpu.id] }
+  model.applyBackend(job,
+    `counter\t${gpu.id}\t1\trender\t100000000\t-\t-\t2\t-\ntime\t100`,
+    [gpu], current)
+  assert.equal(gpu.usage, null)
+  model.applyBackend(job,
+    `counter\t${gpu.id}\t1\trender\t300000000\t-\t-\t2\t-\ntime\t101`,
+    [gpu], current)
+  assert.equal(gpu.usage, 10)
+  assert.equal(gpu.sources.usage, 'fdinfo')
+  assert.equal(gpu.scope, 'clients')
+})
+
+test('fdinfo supports total-cycle and frequency denominators', () => {
+  for (const [first, second, expected] of [
+    ['-\t100\t200\t1\t-', '-\t150\t300\t1\t-', 50],
+    ['-\t100\t-\t1\t1000', '-\t200\t-\t1\t1000', 10]
+  ]) {
+    const gpu = device()
+    const previous = model.fdinfo(
+      `counter\t${gpu.id}\t1\trender\t${first}\ntime\t100`, null, [gpu])
+    model.fdinfo(
+      `counter\t${gpu.id}\t1\trender\t${second}\ntime\t101`, previous, [gpu])
+    assert.equal(gpu.usage, expected)
+  }
+})
+
+test('fdinfo sums clients per engine and publishes the busiest engine', () => {
+  const gpu = device()
+  const first = [
+    `counter\t${gpu.id}\t1\trender\t0\t-\t-\t1\t-`,
+    `counter\t${gpu.id}\t2\trender\t0\t-\t-\t1\t-`,
+    `counter\t${gpu.id}\t1\tvideo\t0\t-\t-\t1\t-`,
+    'time\t100'
+  ].join('\n')
+  const second = [
+    `counter\t${gpu.id}\t1\trender\t100000000\t-\t-\t1\t-`,
+    `counter\t${gpu.id}\t2\trender\t100000000\t-\t-\t1\t-`,
+    `counter\t${gpu.id}\t1\tvideo\t50000000\t-\t-\t1\t-`,
+    'time\t101'
+  ].join('\n')
+  const previous = model.fdinfo(first, null, [gpu])
+  model.fdinfo(second, previous, [gpu])
+  assert.equal(gpu.usage, 20)
+})
+
 test('Intel uses the last complete device sample, not client counters', () => {
   const intel = device()
   const amd = device('0x1002', 'amdgpu', '0000:03:00.0')
