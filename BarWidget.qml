@@ -1004,6 +1004,8 @@ Panel {
                     MenuRow {
                         label: "Process tree"
                         value: root.activity && root.activity.configReady ? (root.procTree ? "On" : "Off") : "Loading…"
+                        valueColor: root.activity && root.activity.configReady && root.procTree
+                            ? Style.selectedStateColor(root.foreground, Commons.Color.accent) : root.dim
                         enabled: root.activity && !root.activity.configBusy
                         navigationIndex: root.treeIndex
                         onClicked: root.cycleSetting(root.treeIndex, 1)
@@ -1020,6 +1022,8 @@ Panel {
                     MenuRow {
                         label: "Transparent background"
                         value: root.activity && root.activity.configReady ? (root.transparentBackground ? "On" : "Off") : "Loading…"
+                        valueColor: root.activity && root.activity.configReady && root.transparentBackground
+                            ? Style.selectedStateColor(root.foreground, Commons.Color.accent) : root.dim
                         enabled: root.activity && !root.activity.configBusy
                         navigationIndex: root.backgroundIndex
                         onClicked: root.cycleSetting(root.backgroundIndex, 1)
@@ -1095,6 +1099,7 @@ Panel {
         property string value: ""
         property string iconText: ""
         property bool selectedIcon: false
+        property color valueColor: root.dim
         required property int navigationIndex
 
         signal clicked
@@ -1141,7 +1146,7 @@ Panel {
             Text {
                 visible: row.value !== ""
                 text: row.value
-                color: root.dim
+                color: row.valueColor
                 font.family: root.fontFamily
                 font.pixelSize: Style.font.bodySmall
                 Layout.alignment: Qt.AlignVCenter
