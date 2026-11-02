@@ -38,6 +38,7 @@ Panel {
     readonly property color dim: Qt.darker(foreground, 1.5)
     readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+    readonly property int menuRowHeight: Style.space(36)
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
     readonly property string customIconPath: String(setting("customIconPath", ""))
     readonly property string customIconUrl: resolveIconPath(customIconPath)
@@ -738,7 +739,7 @@ Panel {
                 Column {
                     visible: root.page === "main"
                     width: parent.width
-                    spacing: Style.space(6)
+                    spacing: Style.spacing.xs
 
                     MenuRow {
                         label: "start " + root.shortcutHint("b") + "top"
@@ -769,7 +770,7 @@ Panel {
                 Column {
                     visible: root.page === "settings"
                     width: parent.width
-                    spacing: Style.space(6)
+                    spacing: Style.spacing.xs
 
                     PanelSectionHeader {
                         text: "PLUGIN"
@@ -862,7 +863,7 @@ Panel {
                     CursorSurface {
                         id: updateRow
                         width: parent.width
-                        implicitHeight: Style.space(52)
+                        implicitHeight: root.menuRowHeight
                         foreground: root.foreground
                         opacity: root.updateAvailable ? 1 : 0.55
                         hasCursor: root.settingsIndex === root.updateIndex
@@ -893,6 +894,8 @@ Panel {
                             }
 
                             Column {
+                                id: updateArrows
+                                Layout.preferredHeight: Style.space(24)
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: 0
 
@@ -901,9 +904,9 @@ Panel {
                                     tooltipText: "Next preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.iconLarge
-                                    size: Style.space(24)
-                                    height: updateField.implicitHeight / 2
+                                    fontSize: Style.font.icon
+                                    size: Style.space(22)
+                                    height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
                                         if (on)
@@ -917,9 +920,9 @@ Panel {
                                     tooltipText: "Previous preset"
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
-                                    fontSize: Style.font.iconLarge
-                                    size: Style.space(24)
-                                    height: updateField.implicitHeight / 2
+                                    fontSize: Style.font.icon
+                                    size: Style.space(22)
+                                    height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
                                         if (on)
@@ -931,8 +934,10 @@ Panel {
 
                             TextField {
                                 id: updateField
-                                Layout.preferredWidth: Style.space(94)
+                                Layout.preferredWidth: Style.space(82)
+                                Layout.preferredHeight: Style.spacing.controlHeight
                                 Layout.alignment: Qt.AlignVCenter
+                                verticalPadding: Style.spacing.sm
                                 text: root.updateDraft
                                 enabled: root.updateAvailable
                                 foreground: root.updateDraftInvalid ? root.urgent : root.foreground
@@ -1094,7 +1099,7 @@ Panel {
         signal clicked
 
         width: parent ? parent.width : implicitWidth
-        implicitHeight: Style.space(44)
+        implicitHeight: root.menuRowHeight
         foreground: root.foreground
         opacity: enabled ? 1 : 0.55
         hasCursor: (root.page === "main" ? root.mainIndex : root.settingsIndex) === navigationIndex
