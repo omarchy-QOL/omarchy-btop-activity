@@ -4,24 +4,22 @@ set -euo pipefail
 
 bindings_file="${1:-$HOME/.config/hypr/bindings.lua}"
 target_line=1
+shortcut_pattern='super[[:space:]]*\+[[:space:]]*ctrl[[:space:]]*\+[[:space:]]*t'
 
 if [[ -r $bindings_file ]]; then
-  target_line=$(awk '
-    {
-      line = tolower($0)
-      matches_btop = line ~ /btop/
-      matches_activity = line ~ /"activity"/
-      matches_shortcut = line ~ /super[[:space:]]*\+[[:space:]]*ctrl[[:space:]]*\+[[:space:]]*t/
-      if (matches_btop || matches_activity || matches_shortcut) {
-        print NR
-        exit
-      }
-    }
-  ' "$bindings_file")
-
-  if [[ -z $target_line ]]; then
-    target_line=$(awk 'END { print NR + 1 }' "$bindings_file")
-  fi
+  line_number=0
+  matched=false
+  while IFS= read -r line || [[ -n $line ]]; do
+    ((line_number += 1))
+    lower=${line,,}
+    if [[ $lower == *btop* || $lower == *'"activity"'* ||
+          $lower =~ $shortcut_pattern ]]; then
+      target_line=$line_number
+      matched=true
+      break
+    fi
+  done <"$bindings_file"
+  "$matched" || target_line=$((line_number + 1))
 fi
 
 if command -v nvim >/dev/null 2>&1; then

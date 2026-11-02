@@ -22,6 +22,7 @@ node --test tests/test_telemetry.mjs
 "$QMLTESTRUNNER" -input "$TEST_DIR" -import "$PLUGIN_ROOT" \
   -platform offscreen -o -,txt
 tests/test_toggle_btop.sh
+tests/test_open_keybindings.sh
 tests/test_plugin_settings_editor.sh
 tests/test_plugin_settings_reload.sh
 tests/test_telemetry_cadence.sh
