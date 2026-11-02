@@ -15,6 +15,7 @@ readonly TEST_DIR PLUGIN_ROOT QMLTESTRUNNER
 cd "$PLUGIN_ROOT"
 
 python3 tests/test_gpu_fdinfo.py
+tests/test_sample_telemetry.sh
 tests/test_state_dir_preparation.sh
 tests/test_config_seed.sh
 node --test tests/test_telemetry.mjs
