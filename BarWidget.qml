@@ -38,6 +38,7 @@ Panel {
     readonly property color dim: Qt.darker(foreground, 1.5)
     readonly property color urgent: bar ? bar.urgent : Commons.Color.urgent
     readonly property string fontFamily: bar ? bar.fontFamily : Style.font.family
+    readonly property int menuWidth: Style.space(304)
     readonly property int menuRowHeight: Style.space(36)
     readonly property string iconStyle: String(setting("iconStyle", "CPU"))
     readonly property string customIconPath: String(setting("customIconPath", ""))
@@ -601,7 +602,7 @@ Panel {
         bar: root.bar
         open: root.opened
         focusTarget: keyCatcher
-        contentWidth: popup.fittedContentWidth(root.page === "createSettings" ? Math.max(Style.space(340), Math.ceil(creationMessage.implicitWidth) + popup.padding * 2 + Border.left(popup.borderSpec) + Border.right(popup.borderSpec)) : Style.space(340))
+        contentWidth: popup.fittedContentWidth(root.page === "createSettings" ? Math.max(Style.space(340), Math.ceil(creationMessage.implicitWidth) + popup.padding * 2 + Border.left(popup.borderSpec) + Border.right(popup.borderSpec)) : root.menuWidth)
         contentHeight: popup.fittedContentHeight(content.implicitHeight)
 
         PanelKeyCatcher {
@@ -679,7 +680,7 @@ Panel {
                         Text {
                             width: parent.width
                             visible: root.page !== "createSettings"
-                            text: (root.page === "main" ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null) + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null) + " · " + root.gpuSummary : "Changes apply to running btop sessions").toUpperCase()
+                            text: (root.page === "main" ? "CPU " + root.percentage(root.activity ? root.activity.cpuUsage : null) + " · RAM " + root.percentage(root.activity ? root.activity.memoryUsage : null) + " · " + root.gpuSummary : "Changes apply to running sessions").toUpperCase()
                             textFormat: Text.PlainText
                             color: root.dim
                             font.family: root.fontFamily
@@ -905,7 +906,7 @@ Panel {
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
                                     fontSize: Style.font.icon
-                                    size: Style.space(22)
+                                    size: Style.space(18)
                                     height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
@@ -921,7 +922,7 @@ Panel {
                                     foreground: root.foreground
                                     fontFamily: root.fontFamily
                                     fontSize: Style.font.icon
-                                    size: Style.space(22)
+                                    size: Style.space(18)
                                     height: updateArrows.height / 2
                                     enabled: root.updateAvailable
                                     onHovered: function (on) {
