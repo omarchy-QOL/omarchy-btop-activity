@@ -141,7 +141,7 @@ for card_path in "$sys_root"/class/drm/card*; do
   emit_gpu "$directory" "$id"
 done
 
-for tool in fastfetch nvidia-smi amd-smi rocm-smi intel_gpu_top xpu-smi; do
+for tool in fastfetch nvidia-smi amd-smi rocm-smi intel_gpu_top xpu-smi python3; do
   path=$(command -v "$tool" || true)
   if [[ -z $path && ( $tool == amd-smi || $tool == rocm-smi ) \
       && -x /opt/rocm/bin/$tool ]]; then

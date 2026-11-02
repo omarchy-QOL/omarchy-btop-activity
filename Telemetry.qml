@@ -19,7 +19,7 @@ QtObject {
   readonly property int gpuStaleMs: Math.max(5000, updateMs * 2)
   readonly property string directory: decodeURIComponent(
     Qt.resolvedUrl(".").toString().replace(/^file:\/\//, "").replace(/\/$/, ""))
-  readonly property string sampler: directory + "/helpers/sample-telemetry.awk"
+  readonly property string sampler: directory + "/helpers/sample-telemetry.sh"
   property var backendErrors: ({})
 
   property var _previousCpu: null
@@ -91,7 +91,7 @@ QtObject {
         !_inventory.raw) return
     sensorProcess.command = [
       "timeout", "--kill-after=0.5s", "2s",
-      "awk", "-v", "mode=sensors", "-v", "inventory=" + _inventory.raw, "-f", sampler
+      "bash", sampler, "sensors", _inventory.raw
     ]
     sensorProcess.running = true
   }
@@ -205,8 +205,8 @@ QtObject {
 
   property Process statsProcess: Process {
     command: [
-      "awk", "-v", "proc_root=" + (Quickshell.env("BTOP_PROC_ROOT") || "/proc"),
-      "-f", root.sampler
+      "bash", root.sampler, "stats",
+      Quickshell.env("BTOP_PROC_ROOT") || "/proc"
     ]
     environment: ({ LC_ALL: "C" })
     stdout: StdioCollector { id: statsOutput; waitForEnd: true }
