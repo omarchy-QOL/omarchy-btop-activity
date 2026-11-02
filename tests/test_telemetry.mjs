@@ -69,11 +69,18 @@ test('discovery resolves PCI aliases for the Intel sys selector', () => {
   }
 })
 
-test('Intel package presence selects the reader, absence keeps the fallback', () => {
+test('Intel reader selection requires the discovered backend', () => {
   const gpu = device()
-  const tools = { intel_gpu_top: '/usr/bin/intel_gpu_top' }
+  const tools = {
+    intel_gpu_top: '/usr/bin/intel_gpu_top', python3: '/usr/bin/python3'
+  }
   assert.equal(model.nextJob([gpu], tools, state(), root, Date.now()).kind, 'intel')
-  assert.equal(model.nextJob([gpu], {}, state(), root, Date.now()).kind, 'fdinfo')
+  const fallback = model.nextJob([gpu], { python3: '/usr/bin/python3' },
+    state(), root, Date.now())
+  assert.equal(fallback.kind, 'fdinfo')
+  assert.equal(fallback.command[0], '/usr/bin/python3')
+  assert.equal(fallback.command[1], root + '/helpers/gpu-fdinfo.py')
+  assert.equal(model.nextJob([gpu], {}, state(), root, Date.now()), null)
   assert.equal(model.nextJob([gpu], tools, state(), root, Date.now()).kind, 'intel')
 })
 
