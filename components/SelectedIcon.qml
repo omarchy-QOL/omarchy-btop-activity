@@ -16,8 +16,6 @@ Item {
   property real iconSize: 12
   property real glyphSize: iconSize
 
-  signal iconLoadFailed(bool failed)
-
   implicitWidth: iconSize
   implicitHeight: iconSize
 
@@ -40,13 +38,6 @@ Item {
     sourceSize.height: 32
     fillMode: Image.PreserveAspectFit
     smooth: true
-    onSourceChanged: root.iconLoadFailed(false)
-    onStatusChanged: {
-      if (status === Image.Error)
-        root.iconLoadFailed(true)
-      else if (status === Image.Ready)
-        root.iconLoadFailed(false)
-    }
   }
 
   Text {

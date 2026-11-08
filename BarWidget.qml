@@ -563,14 +563,27 @@ Panel {
         memoryUsage: root.activity ? root.activity.memoryUsage : 0
         foreground: root.foreground
         fontFamily: root.fontFamily
-        onIconLoadFailed: function (failed) {
-            root.customIconLoadFailed = failed;
-        }
     }
 
     Component {
         id: btopIconComponent
         BtopIcon {}
+    }
+
+    // The one source of the custom icon's load state: the icons that draw it
+    // come and go with the bar's "!" and the menu.
+    Image {
+        visible: false
+        source: root.iconStyle === "Custom" ? root.customIconUrl : ""
+        sourceSize.width: 32
+        sourceSize.height: 32
+        onSourceChanged: root.customIconLoadFailed = false
+        onStatusChanged: {
+            if (status === Image.Error)
+                root.customIconLoadFailed = true;
+            else if (status === Image.Ready)
+                root.customIconLoadFailed = false;
+        }
     }
 
     BarIconButton {
@@ -581,7 +594,7 @@ Panel {
         // Glyphs go through the host's text path: it measures ink at high
         // resolution, while a Text inside iconComponent gets whole-pixel bounds
         // that overshoot and shrink the icon below its neighbours.
-        text: IconGlyph.forStyle(root.iconStyle)
+        text: root.customIconInvalid ? "!" : IconGlyph.forStyle(root.iconStyle)
         fontFamily: root.fontFamily
         iconComponent: text === "" ? btopIconComponent : null
         onPressed: function (buttonCode) {
