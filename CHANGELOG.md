@@ -2,7 +2,7 @@
 
 Notable changes to btop Activity are documented here.
 
-## Unreleased
+## 0.2.8 - 2026-11-08
 
 - Draw the CPU and Pulse glyphs and the invalid custom icon's `!` through the
   bar's own glyph path, so Omarchy 4.5 sizes them like its built-in icons
