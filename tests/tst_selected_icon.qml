@@ -1,6 +1,7 @@
 import QtQuick
 import QtTest
 import "../components" as Components
+import "../lib/IconGlyph.js" as IconGlyph
 
 TestCase {
   name: "SelectedIcon"
@@ -21,5 +22,12 @@ TestCase {
     icon.memoryUsage = 50
     compare(meters.cpuUsage, 42)
     compare(meters.opacity, 1)
+  }
+
+  function test_glyph_styles() {
+    compare(IconGlyph.forStyle("CPU"), "\u{f035b}")
+    compare(IconGlyph.forStyle("Pulse"), "\uf21e")
+    compare(IconGlyph.forStyle("Meters"), "")
+    compare(IconGlyph.forStyle("Custom"), "")
   }
 }

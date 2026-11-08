@@ -11,6 +11,7 @@ import "components" as Components
 import "lib/shortcuts" as Shortcuts
 import "lib/UpdateInterval.js" as UpdateInterval
 import "lib/BtopHumanizer.js" as BtopHumanizer
+import "lib/IconGlyph.js" as IconGlyph
 
 Panel {
     id: root
@@ -567,14 +568,22 @@ Panel {
         }
     }
 
+    Component {
+        id: btopIconComponent
+        BtopIcon {}
+    }
+
     BarIconButton {
         id: button
         anchors.fill: parent
         bar: root.bar
         active: root.opened
-        iconComponent: Component {
-            BtopIcon {}
-        }
+        // Glyphs go through the host's text path: it measures ink at high
+        // resolution, while a Text inside iconComponent gets whole-pixel bounds
+        // that overshoot and shrink the icon below its neighbours.
+        text: IconGlyph.forStyle(root.iconStyle)
+        fontFamily: root.fontFamily
+        iconComponent: text === "" ? btopIconComponent : null
         onPressed: function (buttonCode) {
             hoverTooltip.dismiss();
             if (buttonCode === Qt.LeftButton) {

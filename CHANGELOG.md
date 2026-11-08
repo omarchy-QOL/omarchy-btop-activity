@@ -2,6 +2,11 @@
 
 Notable changes to btop Activity are documented here.
 
+## Unreleased
+
+- Draw the CPU and Pulse glyphs through the bar's own glyph path, so Omarchy
+  4.5 sizes them like its built-in icons instead of shrinking them.
+
 ## 0.2.7 - 2026-11-02
 
 - Keep the private btop config in `XDG_STATE_HOME`, seeded once from the normal

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../lib/IconGlyph.js" as IconGlyph
 
 Item {
   id: root
@@ -50,8 +51,8 @@ Item {
 
   Text {
     anchors.centerIn: parent
-    visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
-    text: root.iconStyle === "CPU" ? "󰍛" : ""
+    text: IconGlyph.forStyle(root.iconStyle)
+    visible: text !== ""
     color: root.foreground
     font.family: root.fontFamily
     font.pixelSize: root.glyphSize
