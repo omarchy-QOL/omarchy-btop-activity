@@ -29,5 +29,6 @@ TestCase {
     compare(IconGlyph.forStyle("Pulse"), "\uf21e")
     compare(IconGlyph.forStyle("Meters"), "")
     compare(IconGlyph.forStyle("Custom"), "")
+    compare(IconGlyph.invalid, "\u{f1238}")
   }
 }
