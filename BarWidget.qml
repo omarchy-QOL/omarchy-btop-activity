@@ -11,6 +11,7 @@ import "components" as Components
 import "lib/shortcuts" as Shortcuts
 import "lib/UpdateInterval.js" as UpdateInterval
 import "lib/BtopHumanizer.js" as BtopHumanizer
+import "lib/IconGlyph.js" as IconGlyph
 
 Panel {
     id: root
@@ -562,8 +563,26 @@ Panel {
         memoryUsage: root.activity ? root.activity.memoryUsage : 0
         foreground: root.foreground
         fontFamily: root.fontFamily
-        onIconLoadFailed: function (failed) {
-            root.customIconLoadFailed = failed;
+    }
+
+    Component {
+        id: btopIconComponent
+        BtopIcon {}
+    }
+
+    // The one source of the custom icon's load state: the icons that draw it
+    // come and go with the bar's invalid mark and the menu.
+    Image {
+        visible: false
+        source: root.iconStyle === "Custom" ? root.customIconUrl : ""
+        sourceSize.width: 32
+        sourceSize.height: 32
+        onSourceChanged: root.customIconLoadFailed = false
+        onStatusChanged: {
+            if (status === Image.Error)
+                root.customIconLoadFailed = true;
+            else if (status === Image.Ready)
+                root.customIconLoadFailed = false;
         }
     }
 
@@ -572,9 +591,12 @@ Panel {
         anchors.fill: parent
         bar: root.bar
         active: root.opened
-        iconComponent: Component {
-            BtopIcon {}
-        }
+        // Glyphs go through the host's text path: it measures ink at high
+        // resolution, while a Text inside iconComponent gets whole-pixel bounds
+        // that overshoot and shrink the icon below its neighbours.
+        text: root.customIconInvalid ? IconGlyph.invalid : IconGlyph.forStyle(root.iconStyle)
+        fontFamily: root.fontFamily
+        iconComponent: text === "" ? btopIconComponent : null
         onPressed: function (buttonCode) {
             hoverTooltip.dismiss();
             if (buttonCode === Qt.LeftButton) {

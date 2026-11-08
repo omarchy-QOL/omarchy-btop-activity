@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import "../lib/IconGlyph.js" as IconGlyph
 
 Item {
   id: root
@@ -14,8 +15,6 @@ Item {
   property real memoryUsage: 0
   property real iconSize: 12
   property real glyphSize: iconSize
-
-  signal iconLoadFailed(bool failed)
 
   implicitWidth: iconSize
   implicitHeight: iconSize
@@ -39,19 +38,12 @@ Item {
     sourceSize.height: 32
     fillMode: Image.PreserveAspectFit
     smooth: true
-    onSourceChanged: root.iconLoadFailed(false)
-    onStatusChanged: {
-      if (status === Image.Error)
-        root.iconLoadFailed(true)
-      else if (status === Image.Ready)
-        root.iconLoadFailed(false)
-    }
   }
 
   Text {
     anchors.centerIn: parent
-    visible: root.iconStyle === "CPU" || root.iconStyle === "Pulse"
-    text: root.iconStyle === "CPU" ? "󰍛" : ""
+    text: IconGlyph.forStyle(root.iconStyle)
+    visible: text !== ""
     color: root.foreground
     font.family: root.fontFamily
     font.pixelSize: root.glyphSize
